@@ -3,11 +3,10 @@
 #include <fstream>
 #include <iostream>
 using namespace std;
-ifstream fin("bfs.in");
-ofstream fout("bfs.out");
+ifstream fin("dfs.in");
+ofstream fout("dfs.out");
 
 #define NO_PATH -1
-
 
 /**
  * @brief Graph class that implements algorithms
@@ -24,6 +23,25 @@ private:
 
     // Edges in the Graph
     vector<vector<int> > edges;
+
+    /**
+     * @brief Does a depth first search and marks the visited nodes
+     * 
+     * @param node node from which to start the search
+     * @param isVisited array that knows whether a node is visited
+     */
+    void DFS(int node, bool isVisited[])
+    {
+        isVisited[node] = 1;
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int targetNode = edges[node][i];
+            if (!isVisited[targetNode])
+            {
+                DFS(targetNode, isVisited);
+            }
+        }
+    }
 
 public:
     /**
@@ -116,21 +134,40 @@ public:
             bfsNodesQueue.pop();
         }
     }
+
+    /**
+     * @brief Get the number of conex components of the Graph
+     * 
+     * @return int number of conex components
+     */
+    int getNumberOfConexComponents()
+    {
+        bool isVisited[numberOfNodes];
+        for (int i = 0; i < numberOfNodes; i++)
+        {
+            isVisited[i] = false;
+        }
+        int numberOfConexComponents = 0;
+        
+        for (int node = 0; node < numberOfNodes; node++)
+        {
+            if (!isVisited[node])
+            {
+                DFS(node, isVisited);
+                numberOfConexComponents++;
+            }
+        }
+        return numberOfConexComponents;
+    }
 };
 
 int main()
 {
-    int numberOfNodes, numberOfEdges, startNode;
-    fin >> numberOfNodes >> numberOfEdges >> startNode;
-    startNode--; // make it zero-based
+    int numberOfNodes, numberOfEdges;
+    fin >> numberOfNodes >> numberOfEdges;
 
-    Graph graph(numberOfNodes, true);
+    Graph graph(numberOfNodes, false);
     graph.readEdges(fin, numberOfEdges, false);
 
-    int distances[numberOfNodes];
-    graph.getMinimumDistances(startNode, distances);
-    for (int i = 0; i < numberOfNodes; i++)
-    {
-        fout << distances[i] << " ";
-    }
+    fout << graph.getNumberOfConexComponents();
 }
