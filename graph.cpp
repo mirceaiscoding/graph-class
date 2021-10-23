@@ -57,7 +57,7 @@ private:
      * @param isVisited if a node is visited or not
      * @param visitedNodes order in which nodes are visited in the DFS
      */
-    void torjanAlgorithm(int node, int currentDepth, int parentNode, vector<vector<int> > &biconnectedComponents,
+    void findBiconnectedComponents(int node, int currentDepth, int parentNode, vector<vector<int> > &biconnectedComponents,
                          int depth[], int low[], bool isVisited[], stack<int> &visitedNodes)
     {
         isVisited[node] = true;
@@ -76,7 +76,7 @@ private:
                 }
                 else
                 {
-                    torjanAlgorithm(targetNode, currentDepth + 1, node, biconnectedComponents, depth, low, isVisited, visitedNodes);
+                    findBiconnectedComponents(targetNode, currentDepth + 1, node, biconnectedComponents, depth, low, isVisited, visitedNodes);
                     low[node] = min(low[node], low[targetNode]);
 
                     if (low[targetNode] >= depth[node])
@@ -226,8 +226,8 @@ public:
             isVisited[node] = false;
         }
 
-        // Call algorithm with startNode as root
-        torjanAlgorithm(startNode, 0, NO_PARENT_NODE, biconnectedComponents, depth, low, isVisited, visitedNodes);
+        // Call recursive function with startNode as root
+        findBiconnectedComponents(startNode, 0, NO_PARENT_NODE, biconnectedComponents, depth, low, isVisited, visitedNodes);
 
         return biconnectedComponents;
     }
