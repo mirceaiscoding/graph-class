@@ -4,8 +4,8 @@
 #include <fstream>
 #include <iostream>
 using namespace std;
-ifstream fin("biconex.in");
-ofstream fout("biconex.out");
+ifstream fin("bfs.in");
+ofstream fout("bfs.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -148,15 +148,15 @@ public:
     }
 
     /**
-     * @brief Get the minimum distances
+     * @brief Get the minimum distances from startNode to all nodes
      * 
-     * @param startNode 
-     * @param distances array where the distances will be placed. It should have [number_of_nodes] elements
+     * @param startNode base node from which the distances are calculated
      */
-    void getMinimumDistances(int startNode, int distances[])
+    vector<int> getMinimumDistances(int startNode)
     {
         queue<int> bfsNodesQueue;
         bool isVisited[numberOfNodes];
+        vector<int> distances(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++)
         {
             isVisited[i] = false;
@@ -187,6 +187,8 @@ public:
             }
             bfsNodesQueue.pop();
         }
+
+        return distances;
     }
 
     /**
@@ -214,6 +216,12 @@ public:
         return numberOfConexComponents;
     }
 
+    /**
+     * @brief Get the biconnected components of the Graph
+     * 
+     * @param startNode node from which to start looking
+     * @return vector<vector<int> > vector of biconnected components (list of nodes)
+     */
     vector<vector<int> > getBiconnectedComponents(int startNode)
     {
         vector<vector<int> > biconnectedComponents;
@@ -235,22 +243,16 @@ public:
 
 int main()
 {
-    int numberOfNodes, numberOfEdges;
-    fin >> numberOfNodes >> numberOfEdges;
-
-    Graph graph(numberOfNodes, false);
+    int numberOfNodes, numberOfEdges, startNode;
+    fin >> numberOfNodes >> numberOfEdges >> startNode;
+    startNode--; // make it zero-based
+ 
+    Graph graph(numberOfNodes, true);
     graph.readEdges(fin, numberOfEdges, false);
 
-    vector<vector<int> > biconnectedComponents = graph.getBiconnectedComponents(0);
-    fout << biconnectedComponents.size() << "\n";
-    for (int i = 0; i < biconnectedComponents.size(); i++)
+    vector<int> distances = graph.getMinimumDistances(startNode);
+    for (int i = 0; i < numberOfNodes; i++)
     {
-        vector<int> component = biconnectedComponents[i];
-        for (int j = 0; j < component.size(); j++)
-        {
-            int node = component[j] + 1;
-            fout << node << " ";
-        }
-        fout << "\n";
+        fout << distances[i] << " ";
     }
 }
