@@ -148,6 +148,49 @@ private:
         }
     }
 
+    /**
+     * @brief Get a list of critical edges (pair of nodes) in `criticalEdges`
+     * 
+     * @param node current node
+     * @param index smallest unused index
+     * @param parentNode parent node of current node
+     * @param criticalEdges the critical edges will be stored here
+     * @param depth depth of nodes (distance from root)
+     * @param low minimum level a node can reach (without going back through parent nodes)
+     * @param isVisited if a node is visited or not
+     */
+    void findCriticalEdges(int node, int &index, int parentNode, vector<vector<int> > &criticalEdges,
+                           int depth[], int low[], bool isVisited[])
+    {
+        isVisited[node] = true;
+        depth[node] = index;
+        low[node] = index;
+        index++;
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int targetNode = edges[node][i];
+            if (!isVisited[targetNode])
+            {
+                findCriticalEdges(targetNode, index, node, criticalEdges, depth, low, isVisited);
+                low[node] = min(low[node], low[targetNode]);
+
+                // Only if there is no other way to reach targetNode from node
+                // So {node, targetNode} is a critical edge
+                if (low[targetNode] == depth[targetNode])
+                {
+                    vector<int> edge;
+                    edge.push_back(node);
+                    edge.push_back(targetNode);
+                    criticalEdges.push_back(edge);
+                }
+            }
+            else if (targetNode != parentNode)
+            {
+                low[node] = min(low[node], low[targetNode]);
+            }
+        }
+    }
+
 public:
     /**
      * @brief Construct a new Graph object
@@ -159,6 +202,34 @@ public:
     {
         this->numberOfNodes = numberOfNodes;
         this->isOriented = isOriented;
+    }
+
+    /**
+     * @brief Set the edges
+     * 
+     * @param connections 
+     */
+    void setEdges(vector<vector<int> > connections)
+    {
+        // Create vectors for every node
+        for (int i = 0; i < numberOfNodes; i++)
+        {
+            vector<int> targetNodes;
+            edges.push_back(targetNodes);
+        }
+
+        for (int i = 0;  i < connections.size(); i++)
+        {
+            int baseNode = connections[i][0];
+            int targetNode = connections[i][1];
+
+            // Add edges
+            edges[baseNode].push_back(targetNode);
+            if (!isOriented)
+            {
+                edges[targetNode].push_back(baseNode);
+            }
+        }
     }
 
     /**
@@ -321,6 +392,46 @@ public:
         }
 
         return stronglyConnectedComponents;
+    }
+
+    /**
+     * @brief Get the critical edges of the Graph
+     * 
+     * @return vector<vector<int> > vector of critical edges (pair of nodes)
+     */
+    vector<vector<int> > getCriticalEdges()
+    {
+        vector<vector<int> > criticalEdges;
+        int depth[numberOfNodes];
+        int low[numberOfNodes];
+        bool isVisited[numberOfNodes];
+        int index = 0;
+        for (int node = 0; node < numberOfNodes; node++)
+        {
+            isVisited[node] = false;
+        }
+
+        for (int node = 0; node < numberOfNodes; node++)
+        {
+            if (!isVisited[node])
+            {
+                // Call recursive function with node as root
+                findCriticalEdges(node, index, NO_PARENT_NODE, criticalEdges, depth, low, isVisited);
+            }
+        }
+
+        return criticalEdges;
+    }
+};
+
+class Solution
+{
+public:
+    vector<vector<int> > criticalConnections(int numberOfNodes, vector<vector<int> > &connections)
+    {
+        Graph graph(numberOfNodes, false);
+        graph.setEdges(connections);
+        return graph.getCriticalEdges();
     }
 };
 
