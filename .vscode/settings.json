@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "vector": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "queue": "cpp",
+        "__bit_reference": "cpp",
+        "algorithm": "cpp"
     }
 }
