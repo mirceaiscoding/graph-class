@@ -3,6 +3,7 @@
 #include <stack>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 using namespace std;
 ifstream fin("ctc.in");
 ofstream fout("ctc.out");
@@ -218,7 +219,7 @@ public:
             edges.push_back(targetNodes);
         }
 
-        for (int i = 0;  i < connections.size(); i++)
+        for (int i = 0; i < connections.size(); i++)
         {
             int baseNode = connections[i][0];
             int targetNode = connections[i][1];
@@ -422,6 +423,49 @@ public:
 
         return criticalEdges;
     }
+
+    /**
+     * @brief Find if the node degrees can form a graph 
+     * (Havel–Hakimi algorithm)
+     * 
+     * @param nodeDegrees vector of node degrees
+     * @return whether the degrees can form a graph
+     */
+    static bool isGraph(vector<int> nodeDegrees)
+    {
+        while (!nodeDegrees.empty())
+        {
+            // Sort degrees in descending order
+            sort(nodeDegrees.begin(), nodeDegrees.end(), std::greater<int>());
+
+            // Erase nodes with degree 0
+            while (!nodeDegrees.empty() && nodeDegrees[nodeDegrees.size() - 1] == 0)
+            {
+                nodeDegrees.pop_back();
+            }
+            if (nodeDegrees.empty())
+            {
+                // All degrees are 0 so it is a graph
+                return true;
+            }
+
+            // Take the highest remaining degree
+            int edges = nodeDegrees[0];
+            if (edges > nodeDegrees.size() - 1)
+            {
+                // More edges then remaining nodes
+                return false;
+            }
+
+            // Consume the edges
+            nodeDegrees[0] = 0;
+            for (int targetNode = 1; targetNode <= edges; targetNode++)
+            {
+                nodeDegrees[targetNode]--;
+            }
+        }
+        return true;
+    }
 };
 
 class Solution
@@ -437,23 +481,17 @@ public:
 
 int main()
 {
-    int numberOfNodes, numberOfEdges;
-    fin >> numberOfNodes >> numberOfEdges;
-
-    Graph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, false);
-
-    vector<vector<int> > stronglyConnectedComponents = graph.getStronglyConnectedComponents();
-
-    fout << stronglyConnectedComponents.size() << "\n";
-    for (int i = 0; i < stronglyConnectedComponents.size(); i++)
-    {
-        vector<int> component = stronglyConnectedComponents[i];
-        for (int j = 0; j < component.size(); j++)
-        {
-            int node = component[j] + 1;
-            fout << node << " ";
-        }
-        fout << "\n";
-    }
+    vector<int> degrees;
+    degrees.push_back(6);
+    degrees.push_back(3);
+    degrees.push_back(3);
+    degrees.push_back(3);
+    degrees.push_back(3);
+    degrees.push_back(2);
+    degrees.push_back(2);
+    degrees.push_back(2);
+    degrees.push_back(2);
+    degrees.push_back(1);
+    degrees.push_back(1);
+    cout << Graph::isGraph(degrees);
 }
