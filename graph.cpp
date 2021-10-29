@@ -5,8 +5,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("ctc.in");
-ofstream fout("ctc.out");
+ifstream fin("sortaret.in");
+ofstream fout("sortaret.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -79,6 +79,15 @@ private:
      */
     void findCriticalEdges(int node, int &index, int parentNode, vector<vector<int> > &criticalEdges,
                            int depth[], int low[], bool isVisited[]);
+
+    /**
+     * @brief Get the nodes in topological order in `topologicalOrder`
+     * 
+     * @param node current node in DFS
+     * @param topologicalOrder the nodes in topological order will be stored here
+     * @param isVisited if a node is visited or not
+     */
+    void findTopologicalOrder(int node, vector<int> &topologicalOrder, bool isVisited[]);
 
 public:
     /**
@@ -153,11 +162,18 @@ public:
      * @return whether the degrees can form a graph
      */
     static bool isGraph(vector<int> nodeDegrees);
+
+    /**
+     * @brief Get the nodes of the Graph in topological order
+     * 
+     * @return vector<int> nodes in topological order
+     */
+    vector<int> getNodesInTopologicalOrder();
 };
 
 void Graph::DFS(int node, bool isVisited[])
 {
-    isVisited[node] = 1;
+    isVisited[node] = true;
     for (int i = 0; i < edges[node].size(); i++)
     {
         int targetNode = edges[node][i];
@@ -276,6 +292,20 @@ void Graph::findCriticalEdges(int node, int &index, int parentNode, vector<vecto
             low[node] = min(low[node], low[targetNode]);
         }
     }
+}
+
+void Graph::findTopologicalOrder(int node, vector<int> &topologicalOrder, bool isVisited[])
+{
+    isVisited[node] = true;
+    for (int i = 0; i < edges[node].size(); i++)
+    {
+        int targetNode = edges[node][i];
+        if (!isVisited[targetNode])
+        {
+            findTopologicalOrder(targetNode, topologicalOrder, isVisited);
+        }
+    }
+    topologicalOrder.push_back(node);
 }
 
 void Graph::setEdges(vector<vector<int> > connections)
@@ -459,41 +489,62 @@ vector<vector<int> > Graph::getCriticalEdges()
     return criticalEdges;
 }
 
-    bool Graph::isGraph(vector<int> nodeDegrees)
+bool Graph::isGraph(vector<int> nodeDegrees)
+{
+    while (!nodeDegrees.empty())
     {
-        while (!nodeDegrees.empty())
+        // Sort degrees in descending order
+        sort(nodeDegrees.begin(), nodeDegrees.end(), std::greater<int>());
+
+        // Erase nodes with degree 0
+        while (!nodeDegrees.empty() && nodeDegrees[nodeDegrees.size() - 1] == 0)
         {
-            // Sort degrees in descending order
-            sort(nodeDegrees.begin(), nodeDegrees.end(), std::greater<int>());
-
-            // Erase nodes with degree 0
-            while (!nodeDegrees.empty() && nodeDegrees[nodeDegrees.size() - 1] == 0)
-            {
-                nodeDegrees.pop_back();
-            }
-            if (nodeDegrees.empty())
-            {
-                // All degrees are 0 so it is a graph
-                return true;
-            }
-
-            // Take the highest remaining degree
-            int edges = nodeDegrees[0];
-            if (edges > nodeDegrees.size() - 1)
-            {
-                // More edges then remaining nodes
-                return false;
-            }
-
-            // Consume the edges
-            nodeDegrees[0] = 0;
-            for (int targetNode = 1; targetNode <= edges; targetNode++)
-            {
-                nodeDegrees[targetNode]--;
-            }
+            nodeDegrees.pop_back();
         }
-        return true;
+        if (nodeDegrees.empty())
+        {
+            // All degrees are 0 so it is a graph
+            return true;
+        }
+
+        // Take the highest remaining degree
+        int edges = nodeDegrees[0];
+        if (edges > nodeDegrees.size() - 1)
+        {
+            // More edges then remaining nodes
+            return false;
+        }
+
+        // Consume the edges
+        nodeDegrees[0] = 0;
+        for (int targetNode = 1; targetNode <= edges; targetNode++)
+        {
+            nodeDegrees[targetNode]--;
+        }
     }
+    return true;
+}
+
+vector<int> Graph::getNodesInTopologicalOrder()
+{
+    vector<int> topologicalOrder;
+    bool isVisited[numberOfNodes];
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        isVisited[node] = false;
+    }
+
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        if (!isVisited[node])
+        {
+            // Call recursive function with node as root
+            findTopologicalOrder(node, topologicalOrder, isVisited);
+        }
+    }
+
+    return topologicalOrder;
+}
 
 class Solution
 {
@@ -508,17 +559,16 @@ public:
 
 int main()
 {
-    vector<int> degrees;
-    degrees.push_back(6);
-    degrees.push_back(3);
-    degrees.push_back(3);
-    degrees.push_back(3);
-    degrees.push_back(3);
-    degrees.push_back(2);
-    degrees.push_back(2);
-    degrees.push_back(2);
-    degrees.push_back(2);
-    degrees.push_back(1);
-    degrees.push_back(1);
-    cout << Graph::isGraph(degrees);
+    int numberOfNodes, numberOfEdges;
+    fin >> numberOfNodes >> numberOfEdges;
+
+    Graph graph(numberOfNodes, true);
+    graph.readEdges(fin, numberOfEdges, false);
+
+    vector<int> topologicalOrder = graph.getNodesInTopologicalOrder();
+
+    for (int i = topologicalOrder.size() -1; i >= 0; i--)
+    {
+        fout << topologicalOrder[i] + 1 << " ";
+    }
 }
