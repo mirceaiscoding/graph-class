@@ -4,6 +4,8 @@
         "stack": "cpp",
         "queue": "cpp",
         "__bit_reference": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "memory": "cpp",
+        "utility": "cpp"
     }
 }

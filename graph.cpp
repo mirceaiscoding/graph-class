@@ -1,6 +1,7 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <map>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
@@ -17,7 +18,7 @@ ofstream fout("sortaret.out");
  */
 class Graph
 {
-private:
+protected:
     // Number of nodes in the Graph
     int numberOfNodes;
 
@@ -557,18 +558,85 @@ public:
     }
 };
 
+class WeightedGraph : Graph
+{
+private:
+    // Maps the edges to their weights
+    map<pair<int, int>, int> weightMap;
+
+    // Sorted edges
+    vector<pair<int, pair<int, int> > > sortedEdges;
+
+    // Compare two edges based on weight
+    bool compareEdges(pair<int, int> edge1, pair<int, int>edge2)
+    {
+        return weightMap[edge1] < weightMap[edge2];
+    }
+
+public:
+    /**
+     * @brief Construct a new weighted Graph object
+     * 
+     * @param numberOfNodes 
+     * @param isOriented 
+     */
+    WeightedGraph(int numberOfNodes, bool isOriented) 
+    : Graph(numberOfNodes, isOriented){}
+
+    /**
+     * @brief Read the edges from a stream
+     * 
+     * @param in 
+     * @param numberOfEdges 
+     * @param isZeroBased 
+     * @param sortedEdges
+     */
+    void readEdges(istream &in, int numberOfEdges, bool isZeroBased, bool holdSortedEdges);
+
+};
+
+void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased, bool holdSortedEdges)
+{
+    // Create vectors for every node
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        vector<int> targetNodes;
+        edges.push_back(targetNodes);
+    }
+
+    for (int i = 0; i < numberOfEdges; i++)
+    {
+        int baseNode, targetNode, weight;
+        in >> baseNode >> targetNode >> weight;
+
+        // Make nodes zero-based
+        if (!isZeroBased)
+        {
+            baseNode--;
+            targetNode--;
+        }
+
+        // Add edges
+        edges[baseNode].push_back(targetNode);
+        weightMap.insert(make_pair(make_pair(baseNode, targetNode), weight));
+        sortedEdges.push_back(make_pair(baseNode, targetNode));
+        if (!isOriented)
+        {
+            edges[targetNode].push_back(baseNode);
+            weightMap.insert(make_pair(make_pair(targetNode, baseNode), weight));
+            sortedEdges.push_back(make_pair(targetNode, baseNode));
+        }
+    }
+    sort(sortedEdges.begin(), sortedEdges.end(), compareEdges);
+}
+
+
 int main()
 {
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
 
-    Graph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, false);
+    WeightedGraph graph(numberOfNodes, true);
+    graph.readEdges(fin, numberOfEdges, false, true);
 
-    vector<int> topologicalOrder = graph.getNodesInTopologicalOrder();
-
-    for (int i = topologicalOrder.size() -1; i >= 0; i--)
-    {
-        fout << topologicalOrder[i] + 1 << " ";
-    }
 }
