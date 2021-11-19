@@ -117,7 +117,7 @@ public:
      * @param numberOfEdges 
      * @param isZeroBased 
      */
-    void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
+    virtual void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
     /**
      * @brief Get the minimum distances from startNode to all nodes
@@ -558,14 +558,11 @@ public:
     }
 };
 
-class WeightedGraph : Graph
+class WeightedGraph : public Graph
 {
 private:
     // Maps the edges to their weights
     map<pair<int, int>, int> weightMap;
-
-    // Sorted edges
-    vector<pair<int, pair<int, int> > > sortedEdges;
 
     // Compare two edges based on weight
     bool compareEdges(pair<int, int> edge1, pair<int, int>edge2)
@@ -583,19 +580,15 @@ public:
     WeightedGraph(int numberOfNodes, bool isOriented) 
     : Graph(numberOfNodes, isOriented){}
 
-    /**
-     * @brief Read the edges from a stream
-     * 
-     * @param in 
-     * @param numberOfEdges 
-     * @param isZeroBased 
-     * @param sortedEdges
-     */
-    void readEdges(istream &in, int numberOfEdges, bool isZeroBased, bool holdSortedEdges);
+    // Read edges from a input stream
+    void readEdges(istream &in, int numberOfEdges, bool isZeroBased) override;
+
+
+    Graph getMinimumSpanningTree(int &totalCost);
 
 };
 
-void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased, bool holdSortedEdges)
+void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
     // Create vectors for every node
     for (int i = 0; i < numberOfNodes; i++)
@@ -619,15 +612,12 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased, 
         // Add edges
         edges[baseNode].push_back(targetNode);
         weightMap.insert(make_pair(make_pair(baseNode, targetNode), weight));
-        sortedEdges.push_back(make_pair(baseNode, targetNode));
         if (!isOriented)
         {
             edges[targetNode].push_back(baseNode);
             weightMap.insert(make_pair(make_pair(targetNode, baseNode), weight));
-            sortedEdges.push_back(make_pair(targetNode, baseNode));
         }
     }
-    sort(sortedEdges.begin(), sortedEdges.end(), compareEdges);
 }
 
 
@@ -637,6 +627,6 @@ int main()
     fin >> numberOfNodes >> numberOfEdges;
 
     WeightedGraph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, false, true);
+    graph.readEdges(fin, numberOfEdges, false);
 
 }
