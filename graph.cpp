@@ -681,20 +681,12 @@ vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
 int WeightedGraph::getRootUpdatePath(int node, int root[])
 {
     // Find root node
-    int rootNode = node;
-    while (root[rootNode] != rootNode)
-    {
-        rootNode = root[rootNode];
+    if (root[node] == NO_PARENT_NODE) {
+        return node;
     }
 
-    // Update roots for previous roots
-    while (node != rootNode)
-    {
-        int previousRoot = root[node];
-        root[node] = rootNode;
-        node = previousRoot;
-    }
-    return rootNode;
+    root[node] = getRootUpdatePath(root[node], root);
+    return root[node];
 }
 
 Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
@@ -706,7 +698,7 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
     int root[numberOfNodes];
     for (int node = 0; node < numberOfNodes; node++)
     {
-        root[node] = node;
+        root[node] = NO_PARENT_NODE;
     }
 
     totalCost = 0;
@@ -735,15 +727,6 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
 
             // Make both trees have the same root
             root[nodeRoot] = targetNodeRoot;
-
-            // if(root[nodeRoot] < root[targetNodeRoot]){
-            //     root[nodeRoot] += root[targetNodeRoot];
-            //     root[targetNodeRoot] = nodeRoot;
-            // }
-            // else{
-            //     root[targetNodeRoot] += root[nodeRoot];
-            //     root[node] = nodeRoot;
-            // }
         }
     }
     return minimumSpanningTree;
@@ -754,7 +737,7 @@ int main()
     int numberOfNodes, numberOfEdges, cost;
     fin >> numberOfNodes >> numberOfEdges;
 
-    WeightedGraph graph(numberOfNodes, false);
+    WeightedGraph graph(numberOfNodes, true);
     graph.readEdges(fin, numberOfEdges, false);
 
     Graph minimumSpanningTree = graph.getMinimumSpanningTree(cost);
