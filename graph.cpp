@@ -200,7 +200,8 @@ void Graph::printEdges(ostream &out, bool isZeroBased)
         {
             int baseNode = node;
             int targetNode = edges[node][i];
-            if (!isZeroBased) {
+            if (!isZeroBased)
+            {
                 baseNode++;
                 targetNode++;
             }
@@ -681,7 +682,8 @@ vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
 int WeightedGraph::getRootUpdatePath(int node, int root[])
 {
     // Find root node
-    if (root[node] == NO_PARENT_NODE) {
+    if (root[node] == NO_PARENT_NODE)
+    {
         return node;
     }
 
@@ -732,16 +734,78 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
     return minimumSpanningTree;
 }
 
+int getRootUpdatePath(int node, int root[])
+{
+    // Find root node
+    if (root[node] == NO_PARENT_NODE)
+    {
+        return node;
+    }
+
+    root[node] = getRootUpdatePath(root[node], root);
+    return root[node];
+}
+
 int main()
 {
-    int numberOfNodes, numberOfEdges, cost;
+    int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
 
-    WeightedGraph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, false);
+    vector<pair<int, pair<int, int> > > sortedEdges;
 
-    Graph minimumSpanningTree = graph.getMinimumSpanningTree(cost);
-    fout << cost << "\n";
+    Graph minimumSpanningTree(numberOfNodes, true);
+
+    for (int i = 0; i < numberOfEdges; i++)
+    {
+        int baseNode, targetNode, weight;
+        fin >> baseNode >> targetNode >> weight;
+
+        // Make nodes zero-based
+        baseNode--;
+        targetNode--;
+
+        // Add edges
+        sortedEdges.push_back(make_pair(weight, make_pair(baseNode, targetNode)));
+    }
+
+    sort(sortedEdges.begin(), sortedEdges.end());
+
+    int root[numberOfNodes];
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        root[node] = NO_PARENT_NODE;
+    }
+
+    int totalCost = 0;
+    int numberOfEdgesInTree = 0;
+
+    for (int i = 0; i < sortedEdges.size(); i++)
+    {
+        // Check if all nodes are in the tree
+        if (numberOfEdgesInTree == numberOfNodes - 1)
+        {
+            break;
+        }
+
+        int cost = sortedEdges[i].first;
+        int node = sortedEdges[i].second.first;
+        int targetNode = sortedEdges[i].second.second;
+
+        int nodeRoot = getRootUpdatePath(node, root);
+        int targetNodeRoot = getRootUpdatePath(targetNode, root);
+
+        if (nodeRoot != targetNodeRoot)
+        {
+            // Add to solution
+            numberOfEdgesInTree++;
+            totalCost += cost;
+            minimumSpanningTree.addEdge(node, targetNode);
+
+            // Make both trees have the same root
+            root[nodeRoot] = targetNodeRoot;
+        }
+    }
+    fout << totalCost << "\n";
     fout << numberOfNodes - 1 << "\n";
     minimumSpanningTree.printEdges(fout, false);
 }
