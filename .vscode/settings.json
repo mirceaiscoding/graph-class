@@ -6,6 +6,8 @@
         "__bit_reference": "cpp",
         "algorithm": "cpp",
         "memory": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp"
     }
 }

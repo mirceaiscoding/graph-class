@@ -6,8 +6,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("sortaret.in");
-ofstream fout("sortaret.out");
+ifstream fin("apm.in");
+ofstream fout("apm.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -101,6 +101,13 @@ public:
     {
         this->numberOfNodes = numberOfNodes;
         this->isOriented = isOriented;
+
+        // Create vectors for every node
+        for (int i = 0; i < numberOfNodes; i++)
+        {
+            vector<int> targetNodes;
+            edges.push_back(targetNodes);
+        }
     }
 
     /**
@@ -111,6 +118,14 @@ public:
     void setEdges(vector<vector<int> > connections);
 
     /**
+     * @brief Add an edge
+     * 
+     * @param node 
+     * @param targetNode 
+     */
+    void addEdge(int node, int targetNode);
+
+    /**
      * @brief Read the edges from a stream
      * 
      * @param in 
@@ -118,6 +133,11 @@ public:
      * @param isZeroBased 
      */
     virtual void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
+
+    /**
+     * @brief Print the edges to a output stream
+     */
+    void printEdges(ostream &out, bool isZeroBased);
 
     /**
      * @brief Get the minimum distances from startNode to all nodes
@@ -171,6 +191,23 @@ public:
      */
     vector<int> getNodesInTopologicalOrder();
 };
+
+void Graph::printEdges(ostream &out, bool isZeroBased)
+{
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int baseNode = node;
+            int targetNode = edges[node][i];
+            if (!isZeroBased) {
+                baseNode++;
+                targetNode++;
+            }
+            out << baseNode << " " << targetNode << "\n";
+        }
+    }
+}
 
 void Graph::DFS(int node, bool isVisited[])
 {
@@ -311,13 +348,6 @@ void Graph::findTopologicalOrder(int node, vector<int> &topologicalOrder, bool i
 
 void Graph::setEdges(vector<vector<int> > connections)
 {
-    // Create vectors for every node
-    for (int i = 0; i < numberOfNodes; i++)
-    {
-        vector<int> targetNodes;
-        edges.push_back(targetNodes);
-    }
-
     for (int i = 0; i < connections.size(); i++)
     {
         int baseNode = connections[i][0];
@@ -332,15 +362,13 @@ void Graph::setEdges(vector<vector<int> > connections)
     }
 }
 
+void Graph::addEdge(int node, int targetNode)
+{
+    edges[node].push_back(targetNode);
+}
+
 void Graph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
-    // Create vectors for every node
-    for (int i = 0; i < numberOfNodes; i++)
-    {
-        vector<int> targetNodes;
-        edges.push_back(targetNodes);
-    }
-
     for (int i = 0; i < numberOfEdges; i++)
     {
         int baseNode, targetNode;
@@ -564,38 +592,52 @@ private:
     // Maps the edges to their weights
     map<pair<int, int>, int> weightMap;
 
-    // Compare two edges based on weight
-    bool compareEdges(pair<int, int> edge1, pair<int, int>edge2)
-    {
-        return weightMap[edge1] < weightMap[edge2];
-    }
+    /**
+     * @brief Get a vector of all edges sorted by weight
+     * 
+     * @return vector<pair<int, pair<int, int> > > sorted edges {cost, {node, targetNode}}
+     */
+    vector<pair<int, pair<int, int> > > getSortedEdges();
+
+    /**
+     * @brief Get the Root of a node and update the root of all nodes we go through
+     * 
+     * @param node 
+     * @param root
+     * @return int Root Node
+     */
+    int getRootUpdatePath(int node, int root[]);
 
 public:
     /**
-     * @brief Construct a new weighted Graph object
+     * @brief Construct a new Weighted Graph object
      * 
      * @param numberOfNodes 
      * @param isOriented 
      */
-    WeightedGraph(int numberOfNodes, bool isOriented) 
-    : Graph(numberOfNodes, isOriented){}
+    WeightedGraph(int numberOfNodes, bool isOriented)
+        : Graph(numberOfNodes, isOriented) {}
 
-    // Read edges from a input stream
-    void readEdges(istream &in, int numberOfEdges, bool isZeroBased) override;
+    /**
+     * @brief Read edges from a input stream
+     * 
+     * @param in 
+     * @param numberOfEdges 
+     * @param isZeroBased 
+     */
+    void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
-
+    /**
+     * @brief Get the Minimum Spanning Tree of the Graph
+     * 
+     * @param totalCost 
+     * @return Graph 
+     */
     Graph getMinimumSpanningTree(int &totalCost);
-
 };
 
 void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
-    // Create vectors for every node
-    for (int i = 0; i < numberOfNodes; i++)
-    {
-        vector<int> targetNodes;
-        edges.push_back(targetNodes);
-    }
 
     for (int i = 0; i < numberOfEdges; i++)
     {
@@ -620,13 +662,103 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
     }
 }
 
+vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
+{
+    vector<pair<int, pair<int, int> > > sortedEdges;
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int targetNode = edges[node][i];
+            int cost = weightMap[make_pair(node, targetNode)];
+            sortedEdges.push_back(make_pair(cost, make_pair(node, targetNode)));
+        }
+    }
+    sort(sortedEdges.begin(), sortedEdges.end());
+    return sortedEdges;
+}
+
+int WeightedGraph::getRootUpdatePath(int node, int root[])
+{
+    // Find root node
+    int rootNode = node;
+    while (root[rootNode] != rootNode)
+    {
+        rootNode = root[rootNode];
+    }
+
+    // Update roots for previous roots
+    while (node != rootNode)
+    {
+        int previousRoot = root[node];
+        root[node] = rootNode;
+        node = previousRoot;
+    }
+    return rootNode;
+}
+
+Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
+{
+    Graph minimumSpanningTree(numberOfNodes, true);
+
+    vector<pair<int, pair<int, int> > > sortedEdges = getSortedEdges();
+
+    int root[numberOfNodes];
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        root[node] = node;
+    }
+
+    totalCost = 0;
+    int numberOfEdgesInTree = 0;
+    for (int i = 0; i < sortedEdges.size(); i++)
+    {
+        // Check if all nodes are in the tree
+        if (numberOfEdgesInTree == numberOfNodes - 1)
+        {
+            break;
+        }
+
+        int cost = sortedEdges[i].first;
+        int node = sortedEdges[i].second.first;
+        int targetNode = sortedEdges[i].second.second;
+
+        int nodeRoot = getRootUpdatePath(node, root);
+        int targetNodeRoot = getRootUpdatePath(targetNode, root);
+
+        if (nodeRoot != targetNodeRoot)
+        {
+            // Add to solution
+            numberOfEdgesInTree++;
+            totalCost += cost;
+            minimumSpanningTree.addEdge(node, targetNode);
+
+            // Make both trees have the same root
+            root[nodeRoot] = targetNodeRoot;
+
+            // if(root[nodeRoot] < root[targetNodeRoot]){
+            //     root[nodeRoot] += root[targetNodeRoot];
+            //     root[targetNodeRoot] = nodeRoot;
+            // }
+            // else{
+            //     root[targetNodeRoot] += root[nodeRoot];
+            //     root[node] = nodeRoot;
+            // }
+        }
+    }
+    return minimumSpanningTree;
+}
 
 int main()
 {
-    int numberOfNodes, numberOfEdges;
+    int numberOfNodes, numberOfEdges, cost;
     fin >> numberOfNodes >> numberOfEdges;
 
-    WeightedGraph graph(numberOfNodes, true);
+    WeightedGraph graph(numberOfNodes, false);
     graph.readEdges(fin, numberOfEdges, false);
 
+    Graph minimumSpanningTree = graph.getMinimumSpanningTree(cost);
+    fout << cost << "\n";
+    fout << numberOfNodes - 1 << "\n";
+    minimumSpanningTree.printEdges(fout, false);
 }
