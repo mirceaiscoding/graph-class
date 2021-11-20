@@ -653,11 +653,14 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 
         // Add edges
         edges[baseNode].push_back(targetNode);
-        weightMap.insert(make_pair(make_pair(baseNode, targetNode), weight));
-        if (!isOriented)
+        if(weightMap.find(make_pair(baseNode, targetNode)) == weightMap.end())
         {
-            edges[targetNode].push_back(baseNode);
-            weightMap.insert(make_pair(make_pair(targetNode, baseNode), weight));
+            weightMap[make_pair(baseNode, targetNode)] = weight;
+        } 
+        else
+        {
+            int minWeight = min(weight, weightMap[make_pair(baseNode, targetNode)]);
+            weightMap[make_pair(baseNode, targetNode)] = minWeight;        
         }
     }
 }
@@ -670,6 +673,10 @@ vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
         for (int i = 0; i < edges[node].size(); i++)
         {
             int targetNode = edges[node][i];
+            if (weightMap.find(make_pair(node, targetNode)) == weightMap.end())
+            {
+                throw "No weight found for this edge!";
+            }
             int cost = weightMap[make_pair(node, targetNode)];
             sortedEdges.push_back(make_pair(cost, make_pair(node, targetNode)));
         }
