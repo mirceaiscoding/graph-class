@@ -190,6 +190,15 @@ public:
      * @return vector<int> nodes in topological order
      */
     vector<int> getNodesInTopologicalOrder();
+
+    /**
+     * @brief Get the Root of a node and update the root of all nodes we go through
+     * 
+     * @param node 
+     * @param root
+     * @return int Root Node
+     */
+    int getRootUpdatePath(int node, int root[]);
 };
 
 void Graph::printEdges(ostream &out, bool isZeroBased)
@@ -575,6 +584,17 @@ vector<int> Graph::getNodesInTopologicalOrder()
     return topologicalOrder;
 }
 
+int Graph::getRootUpdatePath(int node, int root[])
+{
+    // Find root node
+    if (root[node] == NO_PARENT_NODE) {
+        return node;
+    }
+
+    root[node] = getRootUpdatePath(root[node], root);
+    return root[node];
+}
+
 class Solution
 {
 public:
@@ -599,15 +619,6 @@ private:
      */
     vector<pair<int, pair<int, int> > > getSortedEdges();
 
-    /**
-     * @brief Get the Root of a node and update the root of all nodes we go through
-     * 
-     * @param node 
-     * @param root
-     * @return int Root Node
-     */
-    int getRootUpdatePath(int node, int root[]);
-
 public:
     /**
      * @brief Construct a new Weighted Graph object
@@ -630,7 +641,7 @@ public:
     /**
      * @brief Get the Minimum Spanning Tree of the Graph
      * 
-     * @param totalCost 
+     * @param totalCost The cost will be stored here
      * @return Graph 
      */
     Graph getMinimumSpanningTree(int &totalCost);
@@ -683,17 +694,6 @@ vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
     }
     sort(sortedEdges.begin(), sortedEdges.end());
     return sortedEdges;
-}
-
-int WeightedGraph::getRootUpdatePath(int node, int root[])
-{
-    // Find root node
-    if (root[node] == NO_PARENT_NODE) {
-        return node;
-    }
-
-    root[node] = getRootUpdatePath(root[node], root);
-    return root[node];
 }
 
 Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
