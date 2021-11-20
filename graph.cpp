@@ -6,11 +6,13 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("apm.in");
-ofstream fout("apm.out");
+ifstream fin("disjoint.in");
+ofstream fout("disjoint.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
+#define TASK_NUMBER_UNITE_SETS 1
+#define TASK_NUMBER_QUERY_SAME_SET 2
 
 /**
  * @brief Graph class that implements algorithms
@@ -89,6 +91,25 @@ protected:
      * @param isVisited if a node is visited or not
      */
     void findTopologicalOrder(int node, vector<int> &topologicalOrder, bool isVisited[]);
+
+    /**
+     * @brief Get the Root of a node and update the root of all nodes we go through
+     * 
+     * @param node 
+     * @param root
+     * @return int Root Node
+     */
+    int getRootUpdatePath(int node, int root[]);
+
+    /**
+     * @brief Unite the sets by setting the root of one to the other root
+     * 
+     * @param node1Root 
+     * @param node2Root 
+     * @param root 
+     * @param height 
+     */
+    void uniteSets(int node1Root, int node2Root, int root[], int height[]);
 
 public:
     /**
@@ -192,13 +213,15 @@ public:
     vector<int> getNodesInTopologicalOrder();
 
     /**
-     * @brief Get the Root of a node and update the root of all nodes we go through
+     * @brief Solve the tasks and return answers to queries
+     * Tasks can be:
+     * - UNITE SETS
+     * - QUERY SAME SET
      * 
-     * @param node 
-     * @param root
-     * @return int Root Node
+     * @param tasks 
+     * @return vector<string> answers to queries ("DA" / "NU")
      */
-    int getRootUpdatePath(int node, int root[]);
+    vector<string> solveDisjointSetsTasks(vector<pair<int, pair<int, int> > > tasks);
 };
 
 void Graph::printEdges(ostream &out, bool isZeroBased)
@@ -209,7 +232,8 @@ void Graph::printEdges(ostream &out, bool isZeroBased)
         {
             int baseNode = node;
             int targetNode = edges[node][i];
-            if (!isZeroBased) {
+            if (!isZeroBased)
+            {
                 baseNode++;
                 targetNode++;
             }
@@ -587,12 +611,69 @@ vector<int> Graph::getNodesInTopologicalOrder()
 int Graph::getRootUpdatePath(int node, int root[])
 {
     // Find root node
-    if (root[node] == NO_PARENT_NODE) {
+    if (root[node] <= NO_PARENT_NODE)
+    {
         return node;
     }
 
     root[node] = getRootUpdatePath(root[node], root);
     return root[node];
+}
+
+void Graph::uniteSets(int node1Root, int node2Root, int root[], int height[])
+{
+    if (node1Root != node2Root)
+    {
+        if (height[node1Root] > height[node2Root])
+        {
+            height[node1Root] += height[node2Root];
+            root[node2Root] = node1Root;
+        }
+        else
+        {
+            height[node2Root] += height[node1Root];
+            root[node1Root] = node2Root;
+        }
+    }
+}
+
+vector<string> Graph::solveDisjointSetsTasks(vector<pair<int, pair<int, int> > > tasks)
+{
+    int root[numberOfNodes], height[numberOfNodes];
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        root[node] = NO_PARENT_NODE;
+        height[node] = 1;
+    }
+
+    vector<string> answers;
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        int task_number = tasks[i].first;
+        int node1 = tasks[i].second.first;
+        int node2 = tasks[i].second.second;
+
+        int node1Root = getRootUpdatePath(node1, root);
+        int node2Root = getRootUpdatePath(node2, root);
+
+        if (task_number == TASK_NUMBER_UNITE_SETS)
+        {
+            uniteSets(node1Root, node2Root, root, height);
+        }
+
+        if (task_number == TASK_NUMBER_QUERY_SAME_SET)
+        {
+            if (node1Root == node2Root)
+            {
+                answers.push_back("DA");
+            }
+            else
+            {
+                answers.push_back("NU");
+            }
+        }
+    }
+    return answers;
 }
 
 class Solution
@@ -664,14 +745,14 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 
         // Add edges
         edges[baseNode].push_back(targetNode);
-        if(weightMap.find(make_pair(baseNode, targetNode)) == weightMap.end())
+        if (weightMap.find(make_pair(baseNode, targetNode)) == weightMap.end())
         {
             weightMap[make_pair(baseNode, targetNode)] = weight;
-        } 
+        }
         else
         {
             int minWeight = min(weight, weightMap[make_pair(baseNode, targetNode)]);
-            weightMap[make_pair(baseNode, targetNode)] = minWeight;        
+            weightMap[make_pair(baseNode, targetNode)] = minWeight;
         }
     }
 }
@@ -741,14 +822,25 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
 
 int main()
 {
-    int numberOfNodes, numberOfEdges, cost;
-    fin >> numberOfNodes >> numberOfEdges;
+    int numberOfNodes, numberOfTasks;
+    fin >> numberOfNodes >> numberOfTasks;
 
-    WeightedGraph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, false);
+    Graph graph(numberOfNodes, true);
 
-    Graph minimumSpanningTree = graph.getMinimumSpanningTree(cost);
-    fout << cost << "\n";
-    fout << numberOfNodes - 1 << "\n";
-    minimumSpanningTree.printEdges(fout, false);
+    vector<pair<int, pair<int, int> > > tasks;
+    for (int i = 0; i < numberOfTasks; i++)
+    {
+        int task_number, node1, node2;
+        fin >> task_number >> node1 >> node2;
+        node1--;
+        node2--;
+        tasks.push_back(make_pair(task_number, make_pair(node1, node2)));
+    }
+
+    vector<string> answers = graph.solveDisjointSetsTasks(tasks);
+
+    for (int i = 0; i < answers.size(); i++)
+    {
+        fout << answers[i] << "\n";
+    }
 }
