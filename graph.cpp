@@ -2,12 +2,13 @@
 #include <queue>
 #include <stack>
 #include <map>
+#include <set>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("bellmanford.in");
-ofstream fout("bellmanford.out");
+ifstream fin("dijkstra.in");
+ofstream fout("dijkstra.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -721,7 +722,7 @@ public:
     void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
     /**
-     * @brief Get the minimum distances from startNode to all nodes.
+     * @brief Get the minimum distances from startNode to all nodes. (Dijkstra Algorithm)
      * WARNING: Does not work for negative weights!
      * 
      * @param startNode base node from which the distances are calculated
@@ -730,7 +731,7 @@ public:
     vector<int> getMinimumDistances(int startNode);
 
     /**
-     * @brief Get the minimum distances from startNode to all nodes.
+     * @brief Get the minimum distances from startNode to all nodes. (Bellman Ford Algorithm)
      * Throws error when there is a negative cycle
      * 
      * @param startNode base node from which the distances are calculated
@@ -888,49 +889,40 @@ vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode)
 vector<int> WeightedGraph::getMinimumDistances(int startNode)
 {
     vector<int> minimumDistance(numberOfNodes);
-    int frequency[numberOfNodes];
-    bool inQueue[numberOfNodes];
-    queue<int> nodesQueue;
+    set<pair<int, int> > nodeDistanceSet;
     for (int i = 0; i < numberOfNodes; i++)
     {
         minimumDistance[i] = MAX_DISTANCE;
-        frequency[i] = 0;
-        inQueue[i] = false;
     }
 
-    nodesQueue.push(startNode);
+    nodeDistanceSet.insert(make_pair(0, startNode));
     minimumDistance[startNode] = 0;
-    inQueue[startNode] = true;
 
-    while (!nodesQueue.empty())
+    while (!nodeDistanceSet.empty())
     {
-        int node = nodesQueue.front();
-        frequency[node]++;
-        if (frequency[node] > numberOfNodes)
+        int currentNode = nodeDistanceSet.begin()->second;
+        int currentCost = minimumDistance[currentNode];
+        nodeDistanceSet.erase(nodeDistanceSet.begin());
+
+        for (int i = 0; i < edges[currentNode].size(); i++)
         {
-            string error("Ciclu negativ!");
-            throw error;
-        }
-        for (int i = 0; i < edges[node].size(); i++)
-        {
-            int targetNode = edges[node][i];
-            int cost = weightMap[make_pair(node, targetNode)];
-            if (minimumDistance[node] + cost < minimumDistance[targetNode])
+            int targetNode = edges[currentNode][i];
+            int targetCost = weightMap[make_pair(currentNode, targetNode)];
+            if (currentCost + targetCost < minimumDistance[targetNode])
             {
-                minimumDistance[targetNode] = minimumDistance[node] + cost;
-                if (!inQueue[targetNode])
-                {
-                    nodesQueue.push(targetNode);
-                    inQueue[targetNode] = true;
-                }
+                nodeDistanceSet.erase(make_pair(currentNode, currentCost));
+                minimumDistance[targetNode] = currentCost + targetCost;
+                nodeDistanceSet.insert(make_pair(currentCost + targetCost, targetNode));
             }
         }
-        nodesQueue.pop();
-        inQueue[node] = false;
+    }
+    for(int node = 0; node < numberOfNodes; node++){
+        if(minimumDistance[node] == MAX_DISTANCE){
+            minimumDistance[node] = 0;
+        }
     }
     return minimumDistance;
 }
-
 
 int main()
 {
@@ -941,20 +933,12 @@ int main()
     graph.readEdges(fin, numberOfEdges, false);
 
     int startNode = 0;
-    try
+    vector<int> minimumDistances = graph.getMinimumDistances(startNode);
+    for (int i = 0; i < numberOfNodes; i++)
     {
-        vector<int> minimumDistances = graph.getMinimumDistances(startNode);
-        for (int i = 0; i < numberOfNodes; i++)
+        if (i != startNode)
         {
-            if (i != startNode)
-            {
-                fout << minimumDistances[i] << " ";
-            }
+            fout << minimumDistances[i] << " ";
         }
-    }
-    catch (string error)
-    {
-        fout << error;
-        return 0;
     }
 }
