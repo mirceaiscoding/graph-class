@@ -6,13 +6,14 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("disjoint.in");
-ofstream fout("disjoint.out");
+ifstream fin("bellmanford.in");
+ofstream fout("bellmanford.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
 #define TASK_NUMBER_UNITE_SETS 1
 #define TASK_NUMBER_QUERY_SAME_SET 2
+#define MAX_DISTANCE 1000000000
 
 /**
  * @brief Graph class that implements algorithms
@@ -165,7 +166,7 @@ public:
      * 
      * @param startNode base node from which the distances are calculated
      */
-    vector<int> getMinimumDistances(int startNode);
+    virtual vector<int> getMinimumDistances(int startNode);
 
     /**
      * @brief Get the number of conex components of the Graph
@@ -720,6 +721,15 @@ public:
     void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
     /**
+     * @brief Get the minimum distances from startNode to all nodes.
+     * Throws error when there is a negative cycle
+     * 
+     * @param startNode base node from which the distances are calculated
+     * @return the distances from the startNode to all other nodes
+     */
+    vector<int> getMinimumDistances(int startNode);
+
+    /**
      * @brief Get the Minimum Spanning Tree of the Graph
      * 
      * @param totalCost The cost will be stored here
@@ -820,27 +830,75 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
     return minimumSpanningTree;
 }
 
-int main()
+vector<int> WeightedGraph::getMinimumDistances(int startNode)
 {
-    int numberOfNodes, numberOfTasks;
-    fin >> numberOfNodes >> numberOfTasks;
-
-    Graph graph(numberOfNodes, true);
-
-    vector<pair<int, pair<int, int> > > tasks;
-    for (int i = 0; i < numberOfTasks; i++)
+    vector<int> minimumDistance(numberOfNodes);
+    int frequency[numberOfNodes];
+    bool inQueue[numberOfNodes];
+    queue<int> nodesQueue;
+    for (int i = 0; i < numberOfNodes; i++)
     {
-        int task_number, node1, node2;
-        fin >> task_number >> node1 >> node2;
-        node1--;
-        node2--;
-        tasks.push_back(make_pair(task_number, make_pair(node1, node2)));
+        minimumDistance[i] = MAX_DISTANCE;
+        frequency[i] = 0;
+        inQueue[i] = false;
     }
 
-    vector<string> answers = graph.solveDisjointSetsTasks(tasks);
+    nodesQueue.push(startNode);
+    minimumDistance[startNode] = 0;
+    inQueue[startNode] = true;
 
-    for (int i = 0; i < answers.size(); i++)
+    while (!nodesQueue.empty())
     {
-        fout << answers[i] << "\n";
+        int node = nodesQueue.front();
+        frequency[node]++;
+        if (frequency[node] > numberOfNodes)
+        {
+            string error("Ciclu negativ!");
+            throw error;
+        }
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int targetNode = edges[node][i];
+            int cost = weightMap[make_pair(node, targetNode)];
+            if (minimumDistance[node] + cost < minimumDistance[targetNode])
+            {
+                minimumDistance[targetNode] = minimumDistance[node] + cost;
+                if (!inQueue[targetNode])
+                {
+                    nodesQueue.push(targetNode);
+                    inQueue[targetNode] = true;
+                }
+            }
+        }
+        nodesQueue.pop();
+        inQueue[node] = false;
+    }
+    return minimumDistance;
+}
+
+int main()
+{
+    int numberOfNodes, numberOfEdges;
+    fin >> numberOfNodes >> numberOfEdges;
+
+    WeightedGraph graph(numberOfNodes, true);
+    graph.readEdges(fin, numberOfEdges, false);
+
+    int startNode = 0;
+    try
+    {
+        vector<int> minimumDistances = graph.getMinimumDistances(startNode);
+        for (int i = 0; i < numberOfNodes; i++)
+        {
+            if (i != startNode)
+            {
+                fout << minimumDistances[i] << " ";
+            }
+        }
+    }
+    catch (string error)
+    {
+        fout << error;
+        return 0;
     }
 }
