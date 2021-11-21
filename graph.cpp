@@ -2,15 +2,19 @@
 #include <queue>
 #include <stack>
 #include <map>
+#include <set>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("apm.in");
-ofstream fout("apm.out");
+ifstream fin("dijkstra.in");
+ofstream fout("dijkstra.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
+#define TASK_NUMBER_UNITE_SETS 1
+#define TASK_NUMBER_QUERY_SAME_SET 2
+#define MAX_DISTANCE 1000000000
 
 /**
  * @brief Graph class that implements algorithms
@@ -90,6 +94,25 @@ protected:
      */
     void findTopologicalOrder(int node, vector<int> &topologicalOrder, bool isVisited[]);
 
+    /**
+     * @brief Get the Root of a node and update the root of all nodes we go through
+     * 
+     * @param node 
+     * @param root
+     * @return int Root Node
+     */
+    int getRootUpdatePath(int node, int root[]);
+
+    /**
+     * @brief Unite the sets by setting the root of one to the other root
+     * 
+     * @param node1Root 
+     * @param node2Root 
+     * @param root 
+     * @param height 
+     */
+    void uniteSets(int node1Root, int node2Root, int root[], int height[]);
+
 public:
     /**
      * @brief Construct a new Graph object
@@ -144,7 +167,7 @@ public:
      * 
      * @param startNode base node from which the distances are calculated
      */
-    vector<int> getMinimumDistances(int startNode);
+    virtual vector<int> getMinimumDistances(int startNode);
 
     /**
      * @brief Get the number of conex components of the Graph
@@ -190,6 +213,17 @@ public:
      * @return vector<int> nodes in topological order
      */
     vector<int> getNodesInTopologicalOrder();
+
+    /**
+     * @brief Solve the tasks and return answers to queries
+     * Tasks can be:
+     * - UNITE SETS
+     * - QUERY SAME SET
+     * 
+     * @param tasks 
+     * @return vector<string> answers to queries ("DA" / "NU")
+     */
+    vector<string> solveDisjointSetsTasks(vector<pair<int, pair<int, int> > > tasks);
 };
 
 void Graph::printEdges(ostream &out, bool isZeroBased)
@@ -576,6 +610,74 @@ vector<int> Graph::getNodesInTopologicalOrder()
     return topologicalOrder;
 }
 
+int Graph::getRootUpdatePath(int node, int root[])
+{
+    // Find root node
+    if (root[node] <= NO_PARENT_NODE)
+    {
+        return node;
+    }
+
+    root[node] = getRootUpdatePath(root[node], root);
+    return root[node];
+}
+
+void Graph::uniteSets(int node1Root, int node2Root, int root[], int height[])
+{
+    if (node1Root != node2Root)
+    {
+        if (height[node1Root] > height[node2Root])
+        {
+            height[node1Root] += height[node2Root];
+            root[node2Root] = node1Root;
+        }
+        else
+        {
+            height[node2Root] += height[node1Root];
+            root[node1Root] = node2Root;
+        }
+    }
+}
+
+vector<string> Graph::solveDisjointSetsTasks(vector<pair<int, pair<int, int> > > tasks)
+{
+    int root[numberOfNodes], height[numberOfNodes];
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        root[node] = NO_PARENT_NODE;
+        height[node] = 1;
+    }
+
+    vector<string> answers;
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        int task_number = tasks[i].first;
+        int node1 = tasks[i].second.first;
+        int node2 = tasks[i].second.second;
+
+        int node1Root = getRootUpdatePath(node1, root);
+        int node2Root = getRootUpdatePath(node2, root);
+
+        if (task_number == TASK_NUMBER_UNITE_SETS)
+        {
+            uniteSets(node1Root, node2Root, root, height);
+        }
+
+        if (task_number == TASK_NUMBER_QUERY_SAME_SET)
+        {
+            if (node1Root == node2Root)
+            {
+                answers.push_back("DA");
+            }
+            else
+            {
+                answers.push_back("NU");
+            }
+        }
+    }
+    return answers;
+}
+
 class Solution
 {
 public:
@@ -600,15 +702,6 @@ private:
      */
     vector<pair<int, pair<int, int> > > getSortedEdges();
 
-    /**
-     * @brief Get the Root of a node and update the root of all nodes we go through
-     * 
-     * @param node 
-     * @param root
-     * @return int Root Node
-     */
-    int getRootUpdatePath(int node, int root[]);
-
 public:
     /**
      * @brief Construct a new Weighted Graph object
@@ -629,9 +722,27 @@ public:
     void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
     /**
+     * @brief Get the minimum distances from startNode to all nodes. (Dijkstra Algorithm)
+     * WARNING: Does not work for negative weights!
+     * 
+     * @param startNode base node from which the distances are calculated
+     * @return the distances from the startNode to all other nodes
+     */
+    vector<int> getMinimumDistances(int startNode);
+
+    /**
+     * @brief Get the minimum distances from startNode to all nodes. (Bellman Ford Algorithm)
+     * Throws error when there is a negative cycle
+     * 
+     * @param startNode base node from which the distances are calculated
+     * @return the distances from the startNode to all other nodes
+     */
+    vector<int> getMinimumDistancesNegativeWeights(int startNode);
+
+    /**
      * @brief Get the Minimum Spanning Tree of the Graph
      * 
-     * @param totalCost 
+     * @param totalCost The cost will be stored here
      * @return Graph 
      */
     Graph getMinimumSpanningTree(int &totalCost);
@@ -654,11 +765,14 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 
         // Add edges
         edges[baseNode].push_back(targetNode);
-        weightMap.insert(make_pair(make_pair(baseNode, targetNode), weight));
-        if (!isOriented)
+        if (weightMap.find(make_pair(baseNode, targetNode)) == weightMap.end())
         {
-            edges[targetNode].push_back(baseNode);
-            weightMap.insert(make_pair(make_pair(targetNode, baseNode), weight));
+            weightMap[make_pair(baseNode, targetNode)] = weight;
+        }
+        else
+        {
+            int minWeight = min(weight, weightMap[make_pair(baseNode, targetNode)]);
+            weightMap[make_pair(baseNode, targetNode)] = minWeight;
         }
     }
 }
@@ -671,24 +785,16 @@ vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
         for (int i = 0; i < edges[node].size(); i++)
         {
             int targetNode = edges[node][i];
+            if (weightMap.find(make_pair(node, targetNode)) == weightMap.end())
+            {
+                throw "No weight found for this edge!";
+            }
             int cost = weightMap[make_pair(node, targetNode)];
             sortedEdges.push_back(make_pair(cost, make_pair(node, targetNode)));
         }
     }
     sort(sortedEdges.begin(), sortedEdges.end());
     return sortedEdges;
-}
-
-int WeightedGraph::getRootUpdatePath(int node, int root[])
-{
-    // Find root node
-    if (root[node] == NO_PARENT_NODE)
-    {
-        return node;
-    }
-
-    root[node] = getRootUpdatePath(root[node], root);
-    return root[node];
 }
 
 Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
@@ -734,16 +840,88 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
     return minimumSpanningTree;
 }
 
-int getRootUpdatePath(int node, int root[])
+vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode)
 {
-    // Find root node
-    if (root[node] == NO_PARENT_NODE)
+    vector<int> minimumDistance(numberOfNodes);
+    int frequency[numberOfNodes];
+    bool inQueue[numberOfNodes];
+    queue<int> nodesQueue;
+    for (int i = 0; i < numberOfNodes; i++)
     {
-        return node;
+        minimumDistance[i] = MAX_DISTANCE;
+        frequency[i] = 0;
+        inQueue[i] = false;
     }
 
-    root[node] = getRootUpdatePath(root[node], root);
-    return root[node];
+    nodesQueue.push(startNode);
+    minimumDistance[startNode] = 0;
+    inQueue[startNode] = true;
+
+    while (!nodesQueue.empty())
+    {
+        int node = nodesQueue.front();
+        frequency[node]++;
+        if (frequency[node] > numberOfNodes)
+        {
+            string error("Ciclu negativ!");
+            throw error;
+        }
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int targetNode = edges[node][i];
+            int cost = weightMap[make_pair(node, targetNode)];
+            if (minimumDistance[node] + cost < minimumDistance[targetNode])
+            {
+                minimumDistance[targetNode] = minimumDistance[node] + cost;
+                if (!inQueue[targetNode])
+                {
+                    nodesQueue.push(targetNode);
+                    inQueue[targetNode] = true;
+                }
+            }
+        }
+        nodesQueue.pop();
+        inQueue[node] = false;
+    }
+    return minimumDistance;
+}
+
+vector<int> WeightedGraph::getMinimumDistances(int startNode)
+{
+    vector<int> minimumDistance(numberOfNodes);
+    set<pair<int, int> > nodeDistanceSet;
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        minimumDistance[i] = MAX_DISTANCE;
+    }
+
+    nodeDistanceSet.insert(make_pair(0, startNode));
+    minimumDistance[startNode] = 0;
+
+    while (!nodeDistanceSet.empty())
+    {
+        int currentNode = nodeDistanceSet.begin()->second;
+        int currentCost = minimumDistance[currentNode];
+        nodeDistanceSet.erase(nodeDistanceSet.begin());
+
+        for (int i = 0; i < edges[currentNode].size(); i++)
+        {
+            int targetNode = edges[currentNode][i];
+            int targetCost = weightMap[make_pair(currentNode, targetNode)];
+            if (currentCost + targetCost < minimumDistance[targetNode])
+            {
+                nodeDistanceSet.erase(make_pair(currentNode, currentCost));
+                minimumDistance[targetNode] = currentCost + targetCost;
+                nodeDistanceSet.insert(make_pair(currentCost + targetCost, targetNode));
+            }
+        }
+    }
+    for(int node = 0; node < numberOfNodes; node++){
+        if(minimumDistance[node] == MAX_DISTANCE){
+            minimumDistance[node] = 0;
+        }
+    }
+    return minimumDistance;
 }
 
 int main()
@@ -751,61 +929,16 @@ int main()
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
 
-    vector<pair<int, pair<int, int> > > sortedEdges;
+    WeightedGraph graph(numberOfNodes, true);
+    graph.readEdges(fin, numberOfEdges, false);
 
-    Graph minimumSpanningTree(numberOfNodes, true);
-
-    for (int i = 0; i < numberOfEdges; i++)
+    int startNode = 0;
+    vector<int> minimumDistances = graph.getMinimumDistances(startNode);
+    for (int i = 0; i < numberOfNodes; i++)
     {
-        int baseNode, targetNode, weight;
-        fin >> baseNode >> targetNode >> weight;
-
-        // Make nodes zero-based
-        baseNode--;
-        targetNode--;
-
-        // Add edges
-        sortedEdges.push_back(make_pair(weight, make_pair(baseNode, targetNode)));
-    }
-
-    sort(sortedEdges.begin(), sortedEdges.end());
-
-    int root[numberOfNodes];
-    for (int node = 0; node < numberOfNodes; node++)
-    {
-        root[node] = NO_PARENT_NODE;
-    }
-
-    int totalCost = 0;
-    int numberOfEdgesInTree = 0;
-
-    for (int i = 0; i < sortedEdges.size(); i++)
-    {
-        // Check if all nodes are in the tree
-        if (numberOfEdgesInTree == numberOfNodes - 1)
+        if (i != startNode)
         {
-            break;
-        }
-
-        int cost = sortedEdges[i].first;
-        int node = sortedEdges[i].second.first;
-        int targetNode = sortedEdges[i].second.second;
-
-        int nodeRoot = getRootUpdatePath(node, root);
-        int targetNodeRoot = getRootUpdatePath(targetNode, root);
-
-        if (nodeRoot != targetNodeRoot)
-        {
-            // Add to solution
-            numberOfEdgesInTree++;
-            totalCost += cost;
-            minimumSpanningTree.addEdge(node, targetNode);
-
-            // Make both trees have the same root
-            root[nodeRoot] = targetNodeRoot;
+            fout << minimumDistances[i] << " ";
         }
     }
-    fout << totalCost << "\n";
-    fout << numberOfNodes - 1 << "\n";
-    minimumSpanningTree.printEdges(fout, false);
 }
