@@ -722,12 +722,21 @@ public:
 
     /**
      * @brief Get the minimum distances from startNode to all nodes.
-     * Throws error when there is a negative cycle
+     * WARNING: Does not work for negative weights!
      * 
      * @param startNode base node from which the distances are calculated
      * @return the distances from the startNode to all other nodes
      */
     vector<int> getMinimumDistances(int startNode);
+
+    /**
+     * @brief Get the minimum distances from startNode to all nodes.
+     * Throws error when there is a negative cycle
+     * 
+     * @param startNode base node from which the distances are calculated
+     * @return the distances from the startNode to all other nodes
+     */
+    vector<int> getMinimumDistancesNegativeWeights(int startNode);
 
     /**
      * @brief Get the Minimum Spanning Tree of the Graph
@@ -830,6 +839,52 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
     return minimumSpanningTree;
 }
 
+vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode)
+{
+    vector<int> minimumDistance(numberOfNodes);
+    int frequency[numberOfNodes];
+    bool inQueue[numberOfNodes];
+    queue<int> nodesQueue;
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        minimumDistance[i] = MAX_DISTANCE;
+        frequency[i] = 0;
+        inQueue[i] = false;
+    }
+
+    nodesQueue.push(startNode);
+    minimumDistance[startNode] = 0;
+    inQueue[startNode] = true;
+
+    while (!nodesQueue.empty())
+    {
+        int node = nodesQueue.front();
+        frequency[node]++;
+        if (frequency[node] > numberOfNodes)
+        {
+            string error("Ciclu negativ!");
+            throw error;
+        }
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int targetNode = edges[node][i];
+            int cost = weightMap[make_pair(node, targetNode)];
+            if (minimumDistance[node] + cost < minimumDistance[targetNode])
+            {
+                minimumDistance[targetNode] = minimumDistance[node] + cost;
+                if (!inQueue[targetNode])
+                {
+                    nodesQueue.push(targetNode);
+                    inQueue[targetNode] = true;
+                }
+            }
+        }
+        nodesQueue.pop();
+        inQueue[node] = false;
+    }
+    return minimumDistance;
+}
+
 vector<int> WeightedGraph::getMinimumDistances(int startNode)
 {
     vector<int> minimumDistance(numberOfNodes);
@@ -875,6 +930,7 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
     }
     return minimumDistance;
 }
+
 
 int main()
 {
