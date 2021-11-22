@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("dijkstra.in");
-ofstream fout("dijkstra.out");
+ifstream fin("bellmanford.in");
+ofstream fout("bellmanford.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -739,6 +739,9 @@ public:
      */
     vector<int> getMinimumDistancesNegativeWeights(int startNode);
 
+    // Faster function
+    vector<int> getMinimumDistancesNegativeWeights(int startNode, vector<vector<pair<int, int> > > weightedEdges);
+
     /**
      * @brief Get the Minimum Spanning Tree of the Graph
      * 
@@ -840,6 +843,52 @@ Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
     return minimumSpanningTree;
 }
 
+vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode, vector<vector<pair<int, int> > > weightedEdges)
+{
+    vector<int> minimumDistance(numberOfNodes);
+    int frequency[numberOfNodes];
+    bool inQueue[numberOfNodes];
+    queue<int> nodesQueue;
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        minimumDistance[i] = MAX_DISTANCE;
+        frequency[i] = 0;
+        inQueue[i] = false;
+    }
+
+    nodesQueue.push(startNode);
+    minimumDistance[startNode] = 0;
+    inQueue[startNode] = true;
+
+    while (!nodesQueue.empty())
+    {
+        int node = nodesQueue.front();
+        frequency[node]++;
+        if (frequency[node] > numberOfNodes)
+        {
+            string error("Ciclu negativ!");
+            throw error;
+        }
+        for (int i = 0; i < weightedEdges[node].size(); i++)
+        {
+            int targetNode = weightedEdges[node][i].first;
+            int cost = weightedEdges[node][i].second;
+            if (minimumDistance[node] + cost < minimumDistance[targetNode])
+            {
+                minimumDistance[targetNode] = minimumDistance[node] + cost;
+                if (!inQueue[targetNode])
+                {
+                    nodesQueue.push(targetNode);
+                    inQueue[targetNode] = true;
+                }
+            }
+        }
+        nodesQueue.pop();
+        inQueue[node] = false;
+    }
+    return minimumDistance;
+}
+
 vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode)
 {
     vector<int> minimumDistance(numberOfNodes);
@@ -926,19 +975,38 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
 
 int main()
 {
+	// This source is faster but getMinimumDistancesNegativeWeights(int startNode) should be used
+    // The complexity of the two is the same but the hashmap is slower
+
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
-
+ 
     WeightedGraph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, false);
-
-    int startNode = 0;
-    vector<int> minimumDistances = graph.getMinimumDistances(startNode);
-    for (int i = 0; i < numberOfNodes; i++)
+    vector<vector<pair<int, int> > > weightedEdges(numberOfNodes);
+    for (int i = 0; i < numberOfEdges; i++)
     {
-        if (i != startNode)
+        int baseNode, targetNode, cost;
+        fin >> baseNode >> targetNode >> cost;
+        baseNode--;
+        targetNode--;
+        weightedEdges[baseNode].push_back(make_pair(targetNode, cost));
+    }
+ 
+    int startNode = 0;
+    try
+    {
+        vector<int> minimumDistances = graph.getMinimumDistancesNegativeWeights(startNode, weightedEdges);
+        for (int i = 0; i < numberOfNodes; i++)
         {
-            fout << minimumDistances[i] << " ";
+            if (i != startNode)
+            {
+                fout << minimumDistances[i] << " ";
+            }
         }
+    }
+    catch (string error)
+    {
+        fout << error;
+        return 0;
     }
 }
