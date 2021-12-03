@@ -224,6 +224,14 @@ public:
      * @return vector<string> answers to queries ("DA" / "NU")
      */
     vector<string> solveDisjointSetsTasks(vector<pair<int, pair<int, int> > > tasks);
+
+    /**
+     * @brief Get the Diameter of this Tree 
+     * (presumes that this graph is a tree)
+     * 
+     * @return int 
+     */
+    int getTreeDiameter();
 };
 
 void Graph::printEdges(ostream &out, bool isZeroBased)
