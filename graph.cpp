@@ -232,9 +232,10 @@ public:
      * @brief Get the Diameter of this Tree 
      * (presumes that this graph is a tree)
      * 
+     * @param rootNode root of the tree (zero based!!!)
      * @return int 
      */
-    int getTreeDiameter();
+    int getTreeDiameter(int rootNode);
 };
 
 #pragma region GraphClassImplementation
@@ -689,6 +690,36 @@ vector<string> Graph::solveDisjointSetsTasks(vector<pair<int, pair<int, int> > >
     }
     return answers;
 }
+
+int Graph::getTreeDiameter(int rootNode)
+{
+    // Find furthest node from root
+    vector<int> minimumDistances = getMinimumDistances(rootNode);
+    int furthestNode = rootNode;
+    int maximumDistance = 0;
+    for (int i = 0; i < minimumDistances.size(); i++)
+    {
+        if (minimumDistances[i] > maximumDistance)
+        {
+            maximumDistance = minimumDistances[i];
+            furthestNode = i;
+        }
+    }
+
+    // Find furthest node from the previous furthest node
+    minimumDistances = getMinimumDistances(furthestNode);
+    maximumDistance = 0;
+    for (int i = 0; i < minimumDistances.size(); i++)
+    {
+        if (minimumDistances[i] > maximumDistance)
+        {
+            maximumDistance = minimumDistances[i];
+        }
+    }
+
+    return maximumDistance + 1;
+}
+
 #pragma endregion EndGrapClassImplementation
 
 class Solution
@@ -1001,35 +1032,13 @@ int main()
     // This source is faster but getMinimumDistancesNegativeWeights(int startNode) should be used
     // The complexity of the two is the same but the hashmap is slower
 
-    int numberOfNodes, numberOfEdges;
-    fin >> numberOfNodes >> numberOfEdges;
+    int numberOfNodes;
+    fin >> numberOfNodes;
 
-    WeightedGraph graph(numberOfNodes, true);
-    vector<vector<pair<int, int> > > weightedEdges(numberOfNodes);
-    for (int i = 0; i < numberOfEdges; i++)
-    {
-        int baseNode, targetNode, cost;
-        fin >> baseNode >> targetNode >> cost;
-        baseNode--;
-        targetNode--;
-        weightedEdges[baseNode].push_back(make_pair(targetNode, cost));
-    }
+    Graph graph(numberOfNodes, false);
+    graph.readEdges(fin, numberOfNodes - 1, false);
 
-    int startNode = 0;
-    try
-    {
-        vector<int> minimumDistances = graph.getMinimumDistancesNegativeWeights(startNode, weightedEdges);
-        for (int i = 0; i < numberOfNodes; i++)
-        {
-            if (i != startNode)
-            {
-                fout << minimumDistances[i] << " ";
-            }
-        }
-    }
-    catch (string error)
-    {
-        fout << error;
-        return 0;
-    }
+    int treeDiameter = graph.getTreeDiameter(0);
+    fout << treeDiameter;
+    
 }
