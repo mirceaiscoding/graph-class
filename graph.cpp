@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("bellmanford.in");
-ofstream fout("bellmanford.out");
+ifstream fin("darb.in");
+ofstream fout("darb.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -164,6 +164,7 @@ public:
 
     /**
      * @brief Get the minimum distances from startNode to all nodes
+     * (BFS implementation)
      * 
      * @param startNode base node from which the distances are calculated
      */
@@ -171,6 +172,7 @@ public:
 
     /**
      * @brief Get the number of conex components of the Graph
+     * (DFS for each unvisited node)
      * 
      * @return int number of conex components
      */
@@ -209,6 +211,7 @@ public:
 
     /**
      * @brief Get the nodes of the Graph in topological order
+     * (DFS that adds nodes to vector when the recursive call is finished)
      * 
      * @return vector<int> nodes in topological order
      */
@@ -217,8 +220,8 @@ public:
     /**
      * @brief Solve the tasks and return answers to queries
      * Tasks can be:
-     * - UNITE SETS
-     * - QUERY SAME SET
+     * - UNITE SETS (By linking the root of a node to the root of the other node)
+     * - QUERY SAME SET (If nodes are in the same set or not - adds the answer to answers vector)
      * 
      * @param tasks 
      * @return vector<string> answers to queries ("DA" / "NU")
@@ -234,6 +237,7 @@ public:
     int getTreeDiameter();
 };
 
+#pragma region GraphClassImplementation
 void Graph::printEdges(ostream &out, bool isZeroBased)
 {
     for (int node = 0; node < numberOfNodes; node++)
@@ -685,6 +689,7 @@ vector<string> Graph::solveDisjointSetsTasks(vector<pair<int, pair<int, int> > >
     }
     return answers;
 }
+#pragma endregion EndGrapClassImplementation
 
 class Solution
 {
@@ -730,7 +735,8 @@ public:
     void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
     /**
-     * @brief Get the minimum distances from startNode to all nodes. (Dijkstra Algorithm)
+     * @brief Get the minimum distances from startNode to all nodes. 
+     * (Dijkstra Algorithm)
      * WARNING: Does not work for negative weights!
      * 
      * @param startNode base node from which the distances are calculated
@@ -739,7 +745,8 @@ public:
     vector<int> getMinimumDistances(int startNode);
 
     /**
-     * @brief Get the minimum distances from startNode to all nodes. (Bellman Ford Algorithm)
+     * @brief Get the minimum distances from startNode to all nodes. 
+     * (Bellman Ford Algorithm)
      * Throws error when there is a negative cycle
      * 
      * @param startNode base node from which the distances are calculated
@@ -751,7 +758,11 @@ public:
     vector<int> getMinimumDistancesNegativeWeights(int startNode, vector<vector<pair<int, int> > > weightedEdges);
 
     /**
-     * @brief Get the Minimum Spanning Tree of the Graph
+     * @brief Get the Minimum Spanning Tree of the Graph.
+     * (Kruskal Algorithm: 
+     * Sort all edges
+     * Iterate through the edges. If the 2 nodes are not in the same component add the edge
+     * Stop when we have N-1 edges)
      * 
      * @param totalCost The cost will be stored here
      * @return Graph 
@@ -759,6 +770,7 @@ public:
     Graph getMinimumSpanningTree(int &totalCost);
 };
 
+#pragma region WeightedGraphClassImplementation
 void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
 
@@ -973,22 +985,25 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
             }
         }
     }
-    for(int node = 0; node < numberOfNodes; node++){
-        if(minimumDistance[node] == MAX_DISTANCE){
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        if (minimumDistance[node] == MAX_DISTANCE)
+        {
             minimumDistance[node] = 0;
         }
     }
     return minimumDistance;
 }
+#pragma endregion EndWeightedGraphClassImplementation
 
 int main()
 {
-	// This source is faster but getMinimumDistancesNegativeWeights(int startNode) should be used
+    // This source is faster but getMinimumDistancesNegativeWeights(int startNode) should be used
     // The complexity of the two is the same but the hashmap is slower
 
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
- 
+
     WeightedGraph graph(numberOfNodes, true);
     vector<vector<pair<int, int> > > weightedEdges(numberOfNodes);
     for (int i = 0; i < numberOfEdges; i++)
@@ -999,7 +1014,7 @@ int main()
         targetNode--;
         weightedEdges[baseNode].push_back(make_pair(targetNode, cost));
     }
- 
+
     int startNode = 0;
     try
     {
