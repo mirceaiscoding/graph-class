@@ -7,13 +7,14 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("darb.in");
-ofstream fout("darb.out");
+ifstream fin("royfloyd.in");
+ofstream fout("royfloyd.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
 #define TASK_NUMBER_UNITE_SETS 1
 #define TASK_NUMBER_QUERY_SAME_SET 2
+#define NO_EDGE 0
 #define MAX_DISTANCE 1000000000
 
 /**
@@ -766,6 +767,28 @@ public:
     void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
     /**
+     * @brief Read the edges from a stream (matrix format)
+     * 
+     * @param in 
+     */
+    void readEdgesFromMatrix(istream &in);
+
+    /**
+     * @brief Get the Adjacency Matrix of the Graph
+     * 
+     * @return vector<vector<int> > 
+     */
+    vector<vector<int> > getAdjacencyMatrix();
+
+    /**
+     * @brief Prints a Matrix in a stream
+     * 
+     * @param out 
+     * @param matrix
+     */
+    static void printMatrix(ostream &out, vector<vector<int> > matrix);
+
+    /**
      * @brief Get the minimum distances from startNode to all nodes. 
      * (Dijkstra Algorithm)
      * WARNING: Does not work for negative weights!
@@ -828,6 +851,53 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
             int minWeight = min(weight, weightMap[make_pair(baseNode, targetNode)]);
             weightMap[make_pair(baseNode, targetNode)] = minWeight;
         }
+    }
+}
+
+void WeightedGraph::readEdgesFromMatrix(istream &in)
+{
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        for (int j = 0; j < numberOfNodes; j++)
+        {
+            int weight;
+            fin >> weight;
+            edges[i].push_back(j);
+            weightMap[make_pair(i, j)] = weight;
+        }
+    }
+}
+
+vector<vector<int> > WeightedGraph::getAdjacencyMatrix()
+{
+    vector<vector<int> > adjacencyMatrix(numberOfNodes);
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        adjacencyMatrix[i] = vector<int>(numberOfNodes);
+        for (int j = 0; j < numberOfNodes; j++)
+        {
+            if (weightMap.find(make_pair(i, j)) == weightMap.end())
+            {
+                adjacencyMatrix[i][j] = NO_EDGE;
+            }
+            else
+            {
+                adjacencyMatrix[i][j] = weightMap[make_pair(i, j)];
+            }
+        }
+    }
+    return adjacencyMatrix;
+}
+
+void WeightedGraph::printMatrix(ostream &out, vector<vector<int> > matrix)
+{
+    for (int i = 0; i < matrix.size(); i++)
+    {
+        for (int j = 0; j < matrix[i].size(); j++)
+        {
+            out << matrix[i][j] << " ";
+        }
+        out << "\n";
     }
 }
 
@@ -1029,16 +1099,11 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
 
 int main()
 {
-    // This source is faster but getMinimumDistancesNegativeWeights(int startNode) should be used
-    // The complexity of the two is the same but the hashmap is slower
-
     int numberOfNodes;
     fin >> numberOfNodes;
 
-    Graph graph(numberOfNodes, false);
-    graph.readEdges(fin, numberOfNodes - 1, false);
+    WeightedGraph graph(numberOfNodes, false);
+    graph.readEdgesFromMatrix(fin);
 
-    int treeDiameter = graph.getTreeDiameter(0);
-    fout << treeDiameter;
-    
+    graph.printMatrix(fout, graph.getAdjacencyMatrix());
 }
