@@ -812,6 +812,14 @@ public:
     vector<int> getMinimumDistancesNegativeWeights(int startNode, vector<vector<pair<int, int> > > weightedEdges);
 
     /**
+     * @brief Get the Minimum Distances Matrix of the Graph
+     * (Roy Floyd Algorithm)
+     * 
+     * @return vector<vector<int> > 
+     */
+    vector<vector<int> > getMinimumDistancesMatrix();
+
+    /**
      * @brief Get the Minimum Spanning Tree of the Graph.
      * (Kruskal Algorithm: 
      * Sort all edges
@@ -889,12 +897,48 @@ vector<vector<int> > WeightedGraph::getAdjacencyMatrix()
     return adjacencyMatrix;
 }
 
+vector<vector<int> > WeightedGraph::getMinimumDistancesMatrix()
+{
+    vector<vector<int> > minimumDistancesMatrix = getAdjacencyMatrix();
+    for (int i = 0; i < minimumDistancesMatrix.size(); i++)
+    {
+        for (int j = 0; j < minimumDistancesMatrix[i].size(); j++)
+        {
+            if (minimumDistancesMatrix[i][j] == NO_EDGE && i != j)
+            {
+                minimumDistancesMatrix[i][j] = MAX_DISTANCE;
+            }
+        }
+    }
+
+    for (int intermideateNode = 0; intermideateNode < numberOfNodes; intermideateNode++)
+    {
+        for (int baseNode = 0; baseNode < numberOfNodes; baseNode++)
+        {
+            for (int targetNode = 0; targetNode < numberOfNodes; targetNode++)
+            {
+                if (baseNode != targetNode &&
+                    minimumDistancesMatrix[baseNode][intermideateNode] + minimumDistancesMatrix[intermideateNode][targetNode] < minimumDistancesMatrix[baseNode][targetNode])
+                {
+                    minimumDistancesMatrix[baseNode][targetNode] = minimumDistancesMatrix[baseNode][intermideateNode] + minimumDistancesMatrix[intermideateNode][targetNode];
+                }
+            }
+        }
+    }
+
+    return minimumDistancesMatrix;
+}
+
 void WeightedGraph::printMatrix(ostream &out, vector<vector<int> > matrix)
 {
     for (int i = 0; i < matrix.size(); i++)
     {
         for (int j = 0; j < matrix[i].size(); j++)
         {
+            if (matrix[i][j] == MAX_DISTANCE) 
+            {
+                matrix[i][j] = NO_EDGE;
+            }
             out << matrix[i][j] << " ";
         }
         out << "\n";
@@ -1105,5 +1149,5 @@ int main()
     WeightedGraph graph(numberOfNodes, false);
     graph.readEdgesFromMatrix(fin);
 
-    graph.printMatrix(fout, graph.getAdjacencyMatrix());
+    graph.printMatrix(fout, graph.getMinimumDistancesMatrix());
 }
