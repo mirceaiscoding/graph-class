@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("royfloyd.in");
-ofstream fout("royfloyd.out");
+ifstream fin("maxflow.in");
+ofstream fout("maxflow.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -747,6 +747,17 @@ private:
      */
     vector<pair<int, pair<int, int> > > getSortedEdges();
 
+    /**
+     * @brief Whether or not destination can be reached using edges that are not at full capacity
+     * 
+     * @param source 
+     * @param destination 
+     * @param parentNode 
+     * @param flow current flow of every node
+     * @return true if there is a valid path
+     */
+    bool acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], map<pair<int, int>, int> flow);
+
 public:
     /**
      * @brief Construct a new Weighted Graph object
@@ -830,6 +841,16 @@ public:
      * @return Graph 
      */
     Graph getMinimumSpanningTree(int &totalCost);
+
+    /**
+     * @brief Get the Max Flow of the Graph 
+     * (weights are used as capacities)
+     * 
+     * @param source 
+     * @param destination 
+     * @return int 
+     */
+    int getMaxFlow(int source, int destination);
 };
 
 #pragma region WeightedGraphClassImplementation
@@ -858,6 +879,12 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
         {
             int minWeight = min(weight, weightMap[make_pair(baseNode, targetNode)]);
             weightMap[make_pair(baseNode, targetNode)] = minWeight;
+        }
+
+        if (!isOriented)
+        {
+            // Add reverse edges
+            edges[targetNode].push_back(baseNode);
         }
     }
 }
@@ -935,7 +962,7 @@ void WeightedGraph::printMatrix(ostream &out, vector<vector<int> > matrix)
     {
         for (int j = 0; j < matrix[i].size(); j++)
         {
-            if (matrix[i][j] == MAX_DISTANCE) 
+            if (matrix[i][j] == MAX_DISTANCE)
             {
                 matrix[i][j] = NO_EDGE;
             }
@@ -1139,15 +1166,105 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
     }
     return minimumDistance;
 }
+
+bool WeightedGraph::acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], map<pair<int, int>, int> flow)
+{
+    queue<int> bfsNodesQueue;
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        isVisited[i] = false;
+        parentNode[i] = NO_PARENT_NODE;
+    }
+
+    // BFS
+    bfsNodesQueue.push(source);
+    while (!bfsNodesQueue.empty())
+    {
+        int currentNode = bfsNodesQueue.front();
+        isVisited[currentNode] = true;
+        for (int i = 0; i < edges[currentNode].size(); i++)
+        {
+            int targetNode = edges[currentNode][i];
+            int currentFlow = flow[make_pair(currentNode, targetNode)];
+            int capacity = weightMap[make_pair(currentNode, targetNode)];
+            if (!isVisited[targetNode] && currentFlow < capacity)
+            {
+                bfsNodesQueue.push(targetNode);
+                parentNode[targetNode] = currentNode;
+            }
+        }
+        bfsNodesQueue.pop();
+    }
+    return isVisited[destination];
+}
+
+int WeightedGraph::getMaxFlow(int source, int destination)
+{
+
+    int parentNode[numberOfNodes];
+    bool isVisited[numberOfNodes];
+    map<pair<int, int>, int> flow;
+    for (int i = 0; i < numberOfNodes; i++)
+    {
+        for (int j = 0; j < numberOfNodes; j++)
+        {
+            flow[make_pair(i, j)] = 0;
+            flow[make_pair(j, i)] = 0;
+        }
+    }
+
+    int maxFlow = 0;
+    // While destination can be reached using edges that are not at full capacity
+    while (acceptsMoreFlow(source, destination, isVisited, parentNode, flow))
+    {
+        // Go through all nodes connected to destination
+        for (int i = 0; i < edges[destination].size(); i++)
+        {
+            int node = edges[destination][i];
+            int currentFlow = flow[make_pair(node, destination)];
+            int capacity = weightMap[make_pair(node, destination)];
+
+            // Check if node was visited in the BFS and if it accepts more flow
+            if (isVisited[node] && currentFlow < capacity)
+            {
+                // Go from parent to parent and see the minimum value to increase flow for the path
+                int minimumAcceptedFlow = capacity - currentFlow;
+                while (parentNode[node] != NO_PARENT_NODE)
+                {
+                    // capacity - current flow
+                    int currentAcceptedFlow = weightMap[make_pair(parentNode[node], node)] - flow[make_pair(parentNode[node], node)];
+                    minimumAcceptedFlow = min(minimumAcceptedFlow, currentAcceptedFlow);
+                    node = parentNode[node];
+                }
+
+                // Add this flow to solution
+                maxFlow += minimumAcceptedFlow;
+
+                // Increase flow for the path
+                node = edges[destination][i];
+                flow[make_pair(node, destination)] += minimumAcceptedFlow;
+                flow[make_pair(destination, node)] -= minimumAcceptedFlow;
+                while (parentNode[node] != NO_PARENT_NODE)
+                {
+                    flow[make_pair(parentNode[node], node)] += minimumAcceptedFlow;
+                    flow[make_pair(node, parentNode[node])] -= minimumAcceptedFlow;
+                    node = parentNode[node];
+                }
+            }
+        }
+    }
+    return maxFlow;
+}
+
 #pragma endregion EndWeightedGraphClassImplementation
 
 int main()
 {
-    int numberOfNodes;
-    fin >> numberOfNodes;
+    int numberOfNodes, numberOfEdges;
+    fin >> numberOfNodes >> numberOfEdges;
 
     WeightedGraph graph(numberOfNodes, false);
-    graph.readEdgesFromMatrix(fin);
+    graph.readEdges(fin, numberOfEdges, false);
 
-    graph.printMatrix(fout, graph.getMinimumDistancesMatrix());
+    fout << graph.getMaxFlow(0, numberOfNodes - 1);
 }
