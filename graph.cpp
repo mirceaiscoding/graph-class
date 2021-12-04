@@ -756,7 +756,7 @@ private:
      * @param flow current flow of every node
      * @return true if there is a valid path
      */
-    bool acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], map<pair<int, int>, int> flow);
+    bool acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow);
 
 public:
     /**
@@ -1167,7 +1167,7 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
     return minimumDistance;
 }
 
-bool WeightedGraph::acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], map<pair<int, int>, int> flow)
+bool WeightedGraph::acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow)
 {
     queue<int> bfsNodesQueue;
     for (int i = 0; i < numberOfNodes; i++)
@@ -1178,19 +1178,22 @@ bool WeightedGraph::acceptsMoreFlow(int source, int destination, bool isVisited[
 
     // BFS
     bfsNodesQueue.push(source);
+    isVisited[source] = true;
     while (!bfsNodesQueue.empty())
     {
         int currentNode = bfsNodesQueue.front();
-        isVisited[currentNode] = true;
         for (int i = 0; i < edges[currentNode].size(); i++)
         {
             int targetNode = edges[currentNode][i];
-            int currentFlow = flow[make_pair(currentNode, targetNode)];
+            int currentFlow = flow[currentNode][targetNode];
             int capacity = weightMap[make_pair(currentNode, targetNode)];
+            
+            // If targetNode is not visited and not at full capacity
             if (!isVisited[targetNode] && currentFlow < capacity)
             {
                 bfsNodesQueue.push(targetNode);
                 parentNode[targetNode] = currentNode;
+                isVisited[targetNode] = true;
             }
         }
         bfsNodesQueue.pop();
@@ -1203,15 +1206,7 @@ int WeightedGraph::getMaxFlow(int source, int destination)
 
     int parentNode[numberOfNodes];
     bool isVisited[numberOfNodes];
-    map<pair<int, int>, int> flow;
-    for (int i = 0; i < numberOfNodes; i++)
-    {
-        for (int j = 0; j < numberOfNodes; j++)
-        {
-            flow[make_pair(i, j)] = 0;
-            flow[make_pair(j, i)] = 0;
-        }
-    }
+    vector<vector<int> > flow(numberOfNodes, vector<int>(numberOfNodes, 0));
 
     int maxFlow = 0;
     // While destination can be reached using edges that are not at full capacity
@@ -1221,7 +1216,7 @@ int WeightedGraph::getMaxFlow(int source, int destination)
         for (int i = 0; i < edges[destination].size(); i++)
         {
             int node = edges[destination][i];
-            int currentFlow = flow[make_pair(node, destination)];
+            int currentFlow = flow[node][destination];
             int capacity = weightMap[make_pair(node, destination)];
 
             // Check if node was visited in the BFS and if it accepts more flow
@@ -1232,7 +1227,7 @@ int WeightedGraph::getMaxFlow(int source, int destination)
                 while (parentNode[node] != NO_PARENT_NODE)
                 {
                     // capacity - current flow
-                    int currentAcceptedFlow = weightMap[make_pair(parentNode[node], node)] - flow[make_pair(parentNode[node], node)];
+                    int currentAcceptedFlow = weightMap[make_pair(parentNode[node], node)] - flow[parentNode[node]][node];
                     minimumAcceptedFlow = min(minimumAcceptedFlow, currentAcceptedFlow);
                     node = parentNode[node];
                 }
@@ -1242,12 +1237,12 @@ int WeightedGraph::getMaxFlow(int source, int destination)
 
                 // Increase flow for the path
                 node = edges[destination][i];
-                flow[make_pair(node, destination)] += minimumAcceptedFlow;
-                flow[make_pair(destination, node)] -= minimumAcceptedFlow;
+                flow[node][destination] += minimumAcceptedFlow;
+                flow[destination][node] -= minimumAcceptedFlow;
                 while (parentNode[node] != NO_PARENT_NODE)
                 {
-                    flow[make_pair(parentNode[node], node)] += minimumAcceptedFlow;
-                    flow[make_pair(node, parentNode[node])] -= minimumAcceptedFlow;
+                    flow[parentNode[node]][node] += minimumAcceptedFlow;
+                    flow[node][parentNode[node]] -= minimumAcceptedFlow;
                     node = parentNode[node];
                 }
             }

@@ -9,6 +9,7 @@
         "utility": "cpp",
         "tuple": "cpp",
         "type_traits": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "map": "cpp"
     }
 }
