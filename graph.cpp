@@ -747,17 +747,6 @@ private:
      */
     vector<pair<int, pair<int, int> > > getSortedEdges();
 
-    /**
-     * @brief Whether or not destination can be reached using edges that are not at full capacity
-     * 
-     * @param source 
-     * @param destination 
-     * @param parentNode 
-     * @param flow current flow of every node
-     * @return true if there is a valid path
-     */
-    bool acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow);
-
 public:
     /**
      * @brief Construct a new Weighted Graph object
@@ -841,16 +830,6 @@ public:
      * @return Graph 
      */
     Graph getMinimumSpanningTree(int &totalCost);
-
-    /**
-     * @brief Get the Max Flow of the Graph 
-     * (weights are used as capacities)
-     * 
-     * @param source 
-     * @param destination 
-     * @return int 
-     */
-    int getMaxFlow(int source, int destination);
 };
 
 #pragma region WeightedGraphClassImplementation
@@ -1166,8 +1145,90 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
     }
     return minimumDistance;
 }
+#pragma endregion EndWeightedGraphClassImplementation
 
-bool WeightedGraph::acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow)
+class FlowNetwork : public Graph
+{
+private:
+    // Maps the edges to their weights
+    vector<vector<int> > capacity;
+
+    /**
+     * @brief Whether or not destination can be reached using edges that are not at full capacity
+     * 
+     * @param source 
+     * @param destination 
+     * @param parentNode 
+     * @param flow current flow of every node
+     * @return true if there is a valid path
+     */
+    bool acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow);
+
+public:
+    /**
+     * @brief Construct a new Weighted Graph object
+     * 
+     * @param numberOfNodes 
+     * @param isOriented 
+     */
+    FlowNetwork(int numberOfNodes, bool isOriented)
+        : Graph(numberOfNodes, isOriented)
+    {
+        // Initialize capacity
+        vector<int> zeroRow(numberOfNodes, 0);
+        capacity.resize(numberOfNodes, zeroRow);
+    }
+
+    /**
+     * @brief Read edges from a input stream
+     * 
+     * @param in 
+     * @param numberOfEdges 
+     * @param isZeroBased 
+     */
+    void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
+
+    /**
+     * @brief Get the Max Flow of the Graph 
+     * (weights are used as capacities)
+     * 
+     * @param source 
+     * @param destination 
+     * @return int 
+     */
+    int getMaxFlow(int source, int destination);
+};
+
+#pragma region FlowNetworkImplementation
+void FlowNetwork::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
+{
+
+    for (int i = 0; i < numberOfEdges; i++)
+    {
+        int baseNode, targetNode, edgeCapacity;
+        in >> baseNode >> targetNode >> edgeCapacity;
+
+        // Make nodes zero-based
+        if (!isZeroBased)
+        {
+            baseNode--;
+            targetNode--;
+        }
+
+        // Add edges
+        edges[baseNode].push_back(targetNode);
+        capacity[baseNode][targetNode] = edgeCapacity;
+
+        if (!isOriented)
+        {
+            // Add reverse edges
+            edges[targetNode].push_back(baseNode);
+        }
+    }
+}
+
+
+bool FlowNetwork::acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow)
 {
     queue<int> bfsNodesQueue;
     for (int i = 0; i < numberOfNodes; i++)
@@ -1185,11 +1246,11 @@ bool WeightedGraph::acceptsMoreFlow(int source, int destination, bool isVisited[
         for (int i = 0; i < edges[currentNode].size(); i++)
         {
             int targetNode = edges[currentNode][i];
-            int currentFlow = flow[currentNode][targetNode];
-            int capacity = weightMap[make_pair(currentNode, targetNode)];
-            
+            int edgeFlow = flow[currentNode][targetNode];
+            int edgeCapacity = capacity[currentNode][targetNode];
+
             // If targetNode is not visited and not at full capacity
-            if (!isVisited[targetNode] && currentFlow < capacity)
+            if (!isVisited[targetNode] && edgeFlow < edgeCapacity)
             {
                 bfsNodesQueue.push(targetNode);
                 parentNode[targetNode] = currentNode;
@@ -1201,7 +1262,7 @@ bool WeightedGraph::acceptsMoreFlow(int source, int destination, bool isVisited[
     return isVisited[destination];
 }
 
-int WeightedGraph::getMaxFlow(int source, int destination)
+int FlowNetwork::getMaxFlow(int source, int destination)
 {
 
     int parentNode[numberOfNodes];
@@ -1216,18 +1277,18 @@ int WeightedGraph::getMaxFlow(int source, int destination)
         for (int i = 0; i < edges[destination].size(); i++)
         {
             int node = edges[destination][i];
-            int currentFlow = flow[node][destination];
-            int capacity = weightMap[make_pair(node, destination)];
+            int edgeFlow = flow[node][destination];
+            int edgeCapacity = capacity[node][destination];
 
             // Check if node was visited in the BFS and if it accepts more flow
-            if (isVisited[node] && currentFlow < capacity)
+            if (isVisited[node] && edgeFlow < edgeCapacity)
             {
                 // Go from parent to parent and see the minimum value to increase flow for the path
-                int minimumAcceptedFlow = capacity - currentFlow;
+                int minimumAcceptedFlow = edgeCapacity - edgeFlow;
                 while (parentNode[node] != NO_PARENT_NODE)
                 {
                     // capacity - current flow
-                    int currentAcceptedFlow = weightMap[make_pair(parentNode[node], node)] - flow[parentNode[node]][node];
+                    int currentAcceptedFlow = capacity[parentNode[node]][node] - flow[parentNode[node]][node];
                     minimumAcceptedFlow = min(minimumAcceptedFlow, currentAcceptedFlow);
                     node = parentNode[node];
                 }
@@ -1250,15 +1311,15 @@ int WeightedGraph::getMaxFlow(int source, int destination)
     }
     return maxFlow;
 }
+#pragma endregion EndFlowNetworkImplementation
 
-#pragma endregion EndWeightedGraphClassImplementation
 
 int main()
 {
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
 
-    WeightedGraph graph(numberOfNodes, false);
+    FlowNetwork graph(numberOfNodes, false);
     graph.readEdges(fin, numberOfEdges, false);
 
     fout << graph.getMaxFlow(0, numberOfNodes - 1);
