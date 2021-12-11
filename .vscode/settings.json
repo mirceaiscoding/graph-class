@@ -1,15 +1,28 @@
 {
-    "files.associations": {
-        "vector": "cpp",
-        "stack": "cpp",
-        "queue": "cpp",
-        "__bit_reference": "cpp",
-        "algorithm": "cpp",
-        "memory": "cpp",
-        "utility": "cpp",
-        "tuple": "cpp",
-        "type_traits": "cpp",
-        "iosfwd": "cpp",
-        "map": "cpp"
-    }
+  "files.associations": {
+    "vector": "cpp",
+    "stack": "cpp",
+    "queue": "cpp",
+    "__bit_reference": "cpp",
+    "algorithm": "cpp",
+    "memory": "cpp",
+    "utility": "cpp",
+    "tuple": "cpp",
+    "type_traits": "cpp",
+    "iosfwd": "cpp",
+    "map": "cpp"
+  },
+  "C_Cpp_Runner.warnings": [
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic"
+  ],
+  "C_Cpp_Runner.compilerArgs": [],
+  "C_Cpp_Runner.includePaths": [],
+  "C_Cpp_Runner.linkerArgs": [],
+  "C_Cpp_Runner.cStandard": "",
+  "C_Cpp_Runner.cppStandard": "",
+  "C_Cpp_Runner.excludeSearch": [],
+  "C_Cpp_Runner.enableWarnings": true,
+  "C_Cpp_Runner.warningsAsError": false
 }
