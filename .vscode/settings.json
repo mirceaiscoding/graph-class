@@ -10,7 +10,8 @@
     "tuple": "cpp",
     "type_traits": "cpp",
     "iosfwd": "cpp",
-    "map": "cpp"
+    "map": "cpp",
+    "ios": "cpp"
   },
   "C_Cpp_Runner.warnings": [
     "-Wall",
