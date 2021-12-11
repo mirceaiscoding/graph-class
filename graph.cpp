@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("ciclueuler.in");
-ofstream fout("ciclueuler.out");
+ifstream fin("hamilton.in");
+ofstream fout("hamilton.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -732,16 +732,6 @@ int Graph::getTreeDiameter(int rootNode)
 
 vector<int> Graph::getEulerianCycle(int startNode)
 {
-
-    try
-    {
-        
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    
     // Copy edges in a new variable that also stores the edge index
     vector<vector<pair<int, int> > > remainingEdges(numberOfNodes);
     int index = 0;
@@ -842,6 +832,24 @@ private:
      */
     vector<pair<int, pair<int, int> > > getSortedEdges();
 
+    /**
+     * @brief Check if node is in the binary configuration
+     * 
+     * @param node 
+     * @param binaryConfiguration 
+     * @return true if node is in the binary configuration
+     */
+    bool inConfiguration(int node, int binaryConfiguration);
+
+    /**
+     * @brief Add the node to the binary configuration
+     * 
+     * @param node 
+     * @param binaryConfiguration 
+     * @return the new configuration
+     */
+    int addNodeToConfiguration(int node, int binaryConfiguration);
+
 public:
     /**
      * @brief Construct a new Weighted Graph object
@@ -925,12 +933,18 @@ public:
      * @return Graph 
      */
     Graph getMinimumSpanningTree(int &totalCost);
+
+    /**
+     * @brief Get the Minimum Cost of Hamiltonian Cycle of the Graph
+     * 
+     * @return int minimum cost or NO_PATH if there is no Hamiltonian Cycle
+     */
+    int getMinimumCostHamiltonianCycle();
 };
 
 #pragma region WeightedGraphClassImplementation
 void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
-
     for (int i = 0; i < numberOfEdges; i++)
     {
         int baseNode, targetNode, weight;
@@ -1240,6 +1254,82 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
     }
     return minimumDistance;
 }
+
+bool WeightedGraph::inConfiguration(int node, int binaryConfiguration)
+{
+    return ((1 << node) & binaryConfiguration) != 0;
+}
+
+int WeightedGraph::addNodeToConfiguration(int node, int binaryConfiguration)
+{
+    if (inConfiguration(node, binaryConfiguration))
+    {
+        string error = "Node already in binary configuration!";
+        throw error;
+    }
+    return binaryConfiguration + (1 << node);
+}
+
+int WeightedGraph::getMinimumCostHamiltonianCycle()
+{
+
+    // To go through all possible combinations of picking the nodes (0..00, 0..01, 0..10, 0..11, ... 1..11)
+    // we simply iterate consecutive numbers from 0 (0..0) to 2^(numberOfNodes) - 1 (1..1)
+    int fullBinaryConfiguration = (1 << numberOfNodes) - 1;
+    int minimumDistance[(1 << numberOfNodes)][numberOfNodes];
+    for (int binaryConfiguration = 0; binaryConfiguration <= fullBinaryConfiguration; binaryConfiguration++)
+    {
+        for (int node = 0; node < numberOfNodes; node++)
+        {
+            minimumDistance[binaryConfiguration][node] = MAX_DISTANCE;
+        }
+    }
+
+    // minimumDistance[binaryConfiguration][node] = minimum cost to get to node by visiting the nodes in binaryConfiguration
+    minimumDistance[1][0] = 0;
+    for (int binaryConfiguration = 1; binaryConfiguration <= fullBinaryConfiguration; binaryConfiguration++)
+    {
+        for (int node = 0; node < numberOfNodes; node++)
+        {
+            // If node can be reached
+            if (minimumDistance[binaryConfiguration][node] != MAX_DISTANCE)
+            {
+                for (int i = 0; i < edges[node].size(); i++)
+                {
+                    int targetNode = edges[node][i];
+                    // If target node is not already in configuration
+                    if (!inConfiguration(targetNode, binaryConfiguration))
+                    {
+                        int cost = weightMap[make_pair(node, targetNode)];
+                        int newBinaryConfiguration = addNodeToConfiguration(targetNode, binaryConfiguration);
+                        if (minimumDistance[binaryConfiguration][node] + cost < minimumDistance[newBinaryConfiguration][targetNode])
+                        {
+                            minimumDistance[newBinaryConfiguration][targetNode] = minimumDistance[binaryConfiguration][node] + cost;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Find minimum cost to close the cycle
+    int minimumCostHamiltonianCycle = MAX_DISTANCE;
+    for (int node = 1; node < numberOfNodes; node++)
+    {
+        // If node is connected to start node
+        if (weightMap.find(make_pair(node, 0)) != weightMap.end())
+        {
+            int cost = weightMap[make_pair(node, 0)];
+            minimumCostHamiltonianCycle = min(minimumCostHamiltonianCycle, minimumDistance[fullBinaryConfiguration][node] + cost);
+        }
+    }
+
+    if (minimumCostHamiltonianCycle == MAX_DISTANCE)
+    {
+        return NO_PATH;
+    }
+    return minimumCostHamiltonianCycle;
+}
+
 #pragma endregion EndWeightedGraphClassImplementation
 
 class FlowNetwork : public Graph
@@ -1412,27 +1502,14 @@ int main()
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
 
-    Graph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, false);
+    WeightedGraph graph(numberOfNodes, true);
+    graph.readEdges(fin, numberOfEdges, true);
 
-    try
+    int minimumCostHamiltonianCycle = graph.getMinimumCostHamiltonianCycle();
+    if (minimumCostHamiltonianCycle == NO_PATH)
     {
-        vector<int> eulerianCycle = graph.getEulerianCycle(0);
-        for (int i = 0; i < eulerianCycle.size(); i++)
-        {
-            fout << eulerianCycle[i] + 1 << " ";
-        }
+        fout << "Nu exista solutie";
+        return 0;
     }
-    catch (string e)
-    {
-        if (e == "Can't find an eulerian cycle in this graph!")
-        {
-            // No eulerial cycle
-            fout << -1;
-        }
-        else
-        {
-            fout << e;
-        }
-    }
+    fout << graph.getMinimumCostHamiltonianCycle();
 }
