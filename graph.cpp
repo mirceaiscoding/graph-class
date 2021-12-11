@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("maxflow.in");
-ofstream fout("maxflow.out");
+ifstream fin("ciclueuler.in");
+ofstream fout("ciclueuler.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -237,6 +237,15 @@ public:
      * @return int 
      */
     int getTreeDiameter(int rootNode);
+
+    /**
+     * @brief Get an Eulerian Cycle of this graph
+     * Throws error if there is no Eulerian Cycle
+     * 
+     * @param startNode node from which to start searching
+     * @return vector<int> 
+     */
+    vector<int> getEulerianCycle(int startNode);
 };
 
 #pragma region GraphClassImplementation
@@ -719,6 +728,92 @@ int Graph::getTreeDiameter(int rootNode)
     }
 
     return maximumDistance + 1;
+}
+
+vector<int> Graph::getEulerianCycle(int startNode)
+{
+
+    try
+    {
+        
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+    // Copy edges in a new variable that also stores the edge index
+    vector<vector<pair<int, int> > > remainingEdges(numberOfNodes);
+    int index = 0;
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        for (int i = 0; i < edges[node].size(); i++)
+        {
+            int targetNode = edges[node][i];
+            remainingEdges[node].push_back(make_pair(targetNode, index));
+            remainingEdges[targetNode].push_back(make_pair(node, index));
+            index++;
+        }
+    }
+
+    // Mark all esges as not used
+    vector<bool> isUsed(index, false);
+
+    // All nodes must have even degrees if there is an eulerian cycle
+    int degree[numberOfNodes];
+    for (int node = 0; node < numberOfNodes; node++)
+    {
+        degree[node] = remainingEdges[node].size();
+        if (degree[node] % 2 == 1)
+        {
+            string error = "Can't find an eulerian cycle in this graph!";
+        }
+    }
+
+    // Inline DFS implementation using stack
+    vector<int> eulerianCycle;
+    stack<int> nodeStack;
+    nodeStack.push(startNode);
+    while (!nodeStack.empty())
+    {
+        int currentNode = nodeStack.top();
+        if (degree[currentNode] == 0)
+        {
+            // Node has no more unused edges
+            eulerianCycle.push_back(currentNode);
+            nodeStack.pop();
+        }
+        else
+        {
+            // Node still has unused edges
+            // Remove already used edges (from back because it's faster to erase them)
+            // Stop when we find an edge that is not used
+            int targetNode = remainingEdges[currentNode].back().first;
+            int edgeIndex = remainingEdges[currentNode].back().second;
+            while (isUsed[edgeIndex])
+            {
+                remainingEdges[currentNode].pop_back();
+                if (remainingEdges[currentNode].empty())
+                {
+                    string error = "No edge found to match the degree of the node!";
+                    throw error;
+                }
+                targetNode = remainingEdges[currentNode].back().first;
+                edgeIndex = remainingEdges[currentNode].back().second;
+            }
+
+            // Use this edge
+            degree[currentNode]--;
+            degree[targetNode]--;
+            isUsed[edgeIndex] = true;
+            remainingEdges[currentNode].pop_back();
+
+            // Go to target node
+            nodeStack.push(targetNode);
+        }
+    }
+    eulerianCycle.pop_back();
+    return eulerianCycle;
 }
 
 #pragma endregion EndGrapClassImplementation
@@ -1227,7 +1322,6 @@ void FlowNetwork::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
     }
 }
 
-
 bool FlowNetwork::acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow)
 {
     queue<int> bfsNodesQueue;
@@ -1313,14 +1407,32 @@ int FlowNetwork::getMaxFlow(int source, int destination)
 }
 #pragma endregion EndFlowNetworkImplementation
 
-
 int main()
 {
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
 
-    FlowNetwork graph(numberOfNodes, false);
+    Graph graph(numberOfNodes, true);
     graph.readEdges(fin, numberOfEdges, false);
 
-    fout << graph.getMaxFlow(0, numberOfNodes - 1);
+    try
+    {
+        vector<int> eulerianCycle = graph.getEulerianCycle(0);
+        for (int i = 0; i < eulerianCycle.size(); i++)
+        {
+            fout << eulerianCycle[i] + 1 << " ";
+        }
+    }
+    catch (string e)
+    {
+        if (e == "Can't find an eulerian cycle in this graph!")
+        {
+            // No eulerial cycle
+            fout << -1;
+        }
+        else
+        {
+            fout << e;
+        }
+    }
 }
