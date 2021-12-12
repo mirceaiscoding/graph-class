@@ -7,14 +7,15 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("hamilton.in");
-ofstream fout("hamilton.out");
+ifstream fin("cuplaj.in");
+ofstream fout("cuplaj.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
 #define TASK_NUMBER_UNITE_SETS 1
 #define TASK_NUMBER_QUERY_SAME_SET 2
 #define NO_EDGE 0
+#define NO_NODE -1
 #define MAX_DISTANCE 1000000000
 
 /**
@@ -1497,19 +1498,106 @@ int FlowNetwork::getMaxFlow(int source, int destination)
 }
 #pragma endregion EndFlowNetworkImplementation
 
+class BipartedGraph : public Graph
+{
+private:
+    // Number of nodes in the right side of the biparted graph
+    int numberOfRightNodes;
+
+    /**
+     * @brief Check if leftNode can be right connected either to a rightNode 
+     * that is unvisited or leftConnection[rightNode] has an alternate right connection
+     * 
+     * @param leftNode 
+     * @param isVisited 
+     * @param rightConnection 
+     * @param leftConnection 
+     * @return true if leftNode can be connected
+     */
+    bool canBeRightConnected(int leftNode, vector<bool> &isVisited, vector<int> &rightConnection, vector<int> &leftConnection);
+
+public:
+    /**
+     * @brief Construct a new Biparted Graph object
+     * 
+     * @param numberOfNodes 
+     */
+    BipartedGraph(int numberOfNodes, int numberOfRightNodes)
+        : Graph(numberOfNodes, true)
+    {
+        this->numberOfRightNodes = numberOfRightNodes;
+    }
+
+    /**
+     * @brief Get the Maximum Bipartite Matching of the Graph
+     * 
+     * @return vector<pair<int, int> > vector of connections that make up the Maximum Bipartite Matching
+     */
+    vector<pair<int, int> > getMaximumBipartiteMatching();
+};
+
+bool BipartedGraph::canBeRightConnected(int leftNode, vector<bool> &isVisitedRightNode, vector<int> &rightConnection, vector<int> &leftConnection)
+{
+    for (int i = 0; i < edges[leftNode].size(); i++)
+    {
+        int rightNode = edges[leftNode][i];
+        // If node is not yet visited
+        if (!isVisitedRightNode[rightNode])
+        {
+            isVisitedRightNode[rightNode] = true;
+            // If right node doesn't have a left connection
+            // OR If leftConnection of right node has alternate right connection (calls recursive function)
+            if (leftConnection[rightNode] == NO_NODE 
+            || (canBeRightConnected(leftConnection[rightNode], isVisitedRightNode, rightConnection, leftConnection)))
+            {
+                // Connect and return
+                leftConnection[rightNode] = leftNode;
+                rightConnection[leftNode] = rightNode;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+vector<pair<int, int> > BipartedGraph::getMaximumBipartiteMatching()
+{
+    vector<int> rightConnection(numberOfNodes, NO_NODE);
+    vector<int> leftConnection(numberOfRightNodes, NO_NODE);
+
+    for (int leftNode = 0; leftNode < numberOfNodes; leftNode++)
+    {
+        // Reset isVisitedRightNode for this DFS
+        vector<bool> isVisitedRightNode(numberOfRightNodes, false);
+
+        // Call DFS to see if left node can be connected 
+        // while keeping already connected left nodes connected
+        canBeRightConnected(leftNode, isVisitedRightNode, rightConnection, leftConnection);
+    }
+
+    vector<pair<int, int> > matches;
+    for (int leftNode = 0; leftNode < numberOfNodes; leftNode++)
+    {
+        if (rightConnection[leftNode] != NO_NODE)
+        {
+            matches.push_back(make_pair(leftNode, rightConnection[leftNode]));
+        }
+    }
+    return matches;
+}
+
 int main()
 {
-    int numberOfNodes, numberOfEdges;
-    fin >> numberOfNodes >> numberOfEdges;
+    int numberOfNodes, numberOfRightNodes, numberOfEdges;
+    fin >> numberOfNodes >> numberOfRightNodes >> numberOfEdges;
 
-    WeightedGraph graph(numberOfNodes, true);
-    graph.readEdges(fin, numberOfEdges, true);
+    BipartedGraph graph(numberOfNodes, numberOfRightNodes);
+    graph.readEdges(fin, numberOfEdges, false);
 
-    int minimumCostHamiltonianCycle = graph.getMinimumCostHamiltonianCycle();
-    if (minimumCostHamiltonianCycle == NO_PATH)
+    vector<pair<int, int> > matches = graph.getMaximumBipartiteMatching();
+    fout << matches.size() << "\n";
+    for (int i = 0; i < matches.size(); i++)
     {
-        fout << "Nu exista solutie";
-        return 0;
+        fout << matches[i].first + 1 << " " << matches[i].second + 1 << "\n";
     }
-    fout << graph.getMinimumCostHamiltonianCycle();
 }
