@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("cuplaj.in");
-ofstream fout("cuplaj.out");
+ifstream fin("ciclueuler.in");
+ofstream fout("ciclueuler.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -758,6 +758,7 @@ vector<int> Graph::getEulerianCycle(int startNode)
         if (degree[node] % 2 == 1)
         {
             string error = "Can't find an eulerian cycle in this graph!";
+            throw error;
         }
     }
 
@@ -1588,16 +1589,31 @@ vector<pair<int, int> > BipartedGraph::getMaximumBipartiteMatching()
 
 int main()
 {
-    int numberOfNodes, numberOfRightNodes, numberOfEdges;
-    fin >> numberOfNodes >> numberOfRightNodes >> numberOfEdges;
-
-    BipartedGraph graph(numberOfNodes, numberOfRightNodes);
+	
+    int numberOfNodes, numberOfEdges;
+    fin >> numberOfNodes >> numberOfEdges;
+ 
+    Graph graph(numberOfNodes, true);
     graph.readEdges(fin, numberOfEdges, false);
-
-    vector<pair<int, int> > matches = graph.getMaximumBipartiteMatching();
-    fout << matches.size() << "\n";
-    for (int i = 0; i < matches.size(); i++)
+ 
+    try
     {
-        fout << matches[i].first + 1 << " " << matches[i].second + 1 << "\n";
+        vector<int> eulerianCycle = graph.getEulerianCycle(0);
+        for (int i = 0; i < eulerianCycle.size(); i++)
+        {
+            fout << eulerianCycle[i] + 1 << " ";
+        }
+    }
+    catch (string e)
+    {
+        if (e == "Can't find an eulerian cycle in this graph!")
+        {
+            // No eulerial cycle
+            fout << -1;
+        }
+        else
+        {
+            fout << e;
+        }
     }
 }
