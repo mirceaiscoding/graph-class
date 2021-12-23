@@ -7,8 +7,8 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-ifstream fin("ciclueuler.in");
-ofstream fout("ciclueuler.out");
+ifstream fin("dfs.in");
+ofstream fout("dfs.out");
 
 #define NO_PATH -1
 #define NO_PARENT_NODE -1
@@ -34,85 +34,28 @@ protected:
     // Edges in the Graph
     vector<vector<int> > edges;
 
-    /**
-     * @brief Does a depth first search and marks the visited nodes
-     * 
-     * @param node node from which to start the search
-     * @param isVisited array that knows whether a node is visited
-     */
+    // Does a depth first search and marks the visited nodes
     void DFS(int node, bool isVisited[]);
 
-    /**
-     * @brief Get a list of biconnected components (lists of nodes) in `biconnectedComponents`
-     * 
-     * @param node current node
-     * @param currentDepth current depth
-     * @param parentNode parent node of current node
-     * @param biconnectedComponents the biconnected components will be stored here
-     * @param depth depth of nodes (distance from root)
-     * @param low minimum level a node can reach (without going back through parent nodes)
-     * @param isVisited if a node is visited or not
-     * @param visitedNodes order in which nodes are visited in the DFS
-     */
+    // Get a list of biconnected components (lists of nodes) in `biconnectedComponents`
     void findBiconnectedComponents(int node, int currentDepth, int parentNode, vector<vector<int> > &biconnectedComponents,
                                    int depth[], int low[], bool isVisited[], stack<int> &visitedNodes);
 
-    /**
-     * @brief Get a list of strongly connected components (lists of nodes) in `stronglyConnectedComponents`
-     * 
-     * @param node current node
-     * @param index smallest unused index
-     * @param parentNode parent node of current node
-     * @param stronglyConnectedComponents the strongly connected components will be stored here
-     * @param depth depth of nodes (distance from root)
-     * @param low minimum level a node can reach (without going back through parent nodes)
-     * @param isVisited if a node is visited or not
-     * @param inStack if the node is in the visitedNodes stack
-     * @param visitedNodes order in which nodes are visited in the DFS
-     */
+    // Get a list of strongly connected components (lists of nodes) in `stronglyConnectedComponents`
     void findStronglyConnectedComponents(int node, int &index, int parentNode, vector<vector<int> > &stronglyConnectedComponents,
                                          int depth[], int low[], bool isVisited[], bool inStack[], stack<int> &visitedNodes);
 
-    /**
-     * @brief Get a list of critical edges (pair of nodes) in `criticalEdges`
-     * 
-     * @param node current node
-     * @param index smallest unused index
-     * @param parentNode parent node of current node
-     * @param criticalEdges the critical edges will be stored here
-     * @param depth depth of nodes (distance from root)
-     * @param low minimum level a node can reach (without going back through parent nodes)
-     * @param isVisited if a node is visited or not
-     */
+    // Get a list of critical edges (pair of nodes) in `criticalEdges`
     void findCriticalEdges(int node, int &index, int parentNode, vector<vector<int> > &criticalEdges,
                            int depth[], int low[], bool isVisited[]);
 
-    /**
-     * @brief Get the nodes in topological order in `topologicalOrder`
-     * 
-     * @param node current node in DFS
-     * @param topologicalOrder the nodes in topological order will be stored here
-     * @param isVisited if a node is visited or not
-     */
+    // Get the nodes in topological order in `topologicalOrder`
     void findTopologicalOrder(int node, vector<int> &topologicalOrder, bool isVisited[]);
 
-    /**
-     * @brief Get the Root of a node and update the root of all nodes we go through
-     * 
-     * @param node 
-     * @param root
-     * @return int Root Node
-     */
+    // Get the Root of a node and update the root of all nodes we go through
     int getRootUpdatePath(int node, int root[]);
 
-    /**
-     * @brief Unite the sets by setting the root of one to the other root
-     * 
-     * @param node1Root 
-     * @param node2Root 
-     * @param root 
-     * @param height 
-     */
+    // Unite the sets by setting the root of one to the other root
     void uniteSets(int node1Root, int node2Root, int root[], int height[]);
 
 public:
@@ -135,121 +78,54 @@ public:
         }
     }
 
-    /**
-     * @brief Set the edges
-     * 
-     * @param connections 
-     */
+    // Set the edges
     void setEdges(vector<vector<int> > connections);
 
-    /**
-     * @brief Add an edge
-     * 
-     * @param node 
-     * @param targetNode 
-     */
+    // Add an edge
     void addEdge(int node, int targetNode);
 
-    /**
-     * @brief Read the edges from a stream
-     * 
-     * @param in 
-     * @param numberOfEdges 
-     * @param isZeroBased 
-     */
+    // Read the edges from a stream
     virtual void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
-    /**
-     * @brief Print the edges to a output stream
-     */
+    // Print the edges to a output stream
     void printEdges(ostream &out, bool isZeroBased);
 
-    /**
-     * @brief Get the minimum distances from startNode to all nodes
-     * (BFS implementation)
-     * 
-     * @param startNode base node from which the distances are calculated
-     */
+    // Get the minimum distances from startNode to all nodes (BFS implementation)
     virtual vector<int> getMinimumDistances(int startNode);
 
-    /**
-     * @brief Get the number of conex components of the Graph
-     * (DFS for each unvisited node)
-     * 
-     * @return int number of conex components
-     */
+    // Get the number of conex components of the Graph (DFS for each unvisited node)
     int getNumberOfConexComponents();
 
-    /**
-     * @brief Get the biconnected components of the Graph
-     * 
-     * @param startNode node from which to start looking
-     * @return vector<vector<int> > vector of biconnected components (list of nodes)
-     */
+    // Get the biconnected components of the Graph
     vector<vector<int> > getBiconnectedComponents(int startNode);
 
-    /**
-     * @brief Get the strongly connected components of the Graph
-     * 
-     * @return vector<vector<int> > vector of strongly connected components (list of nodes)
-     */
+    // Get the strongly connected components of the Graph
     vector<vector<int> > getStronglyConnectedComponents();
 
-    /**
-     * @brief Get the critical edges of the Graph
-     * 
-     * @return vector<vector<int> > vector of critical edges (pair of nodes)
-     */
+    // Get the critical edges of the Graph
     vector<vector<int> > getCriticalEdges();
 
-    /**
-     * @brief Find if the node degrees can form a graph 
-     * (Havel–Hakimi algorithm)
-     * 
-     * @param nodeDegrees vector of node degrees
-     * @return whether the degrees can form a graph
-     */
+    // Find if the node degrees can form a graph (Havel–Hakimi algorithm)
     static bool isGraph(vector<int> nodeDegrees);
 
-    /**
-     * @brief Get the nodes of the Graph in topological order
-     * (DFS that adds nodes to vector when the recursive call is finished)
-     * 
-     * @return vector<int> nodes in topological order
-     */
+    // Get the nodes of the Graph in topological order 
+    // (DFS that adds nodes to vector when the recursive call is finished)
     vector<int> getNodesInTopologicalOrder();
 
-    /**
-     * @brief Solve the tasks and return answers to queries
-     * Tasks can be:
-     * - UNITE SETS (By linking the root of a node to the root of the other node)
-     * - QUERY SAME SET (If nodes are in the same set or not - adds the answer to answers vector)
-     * 
-     * @param tasks 
-     * @return vector<string> answers to queries ("DA" / "NU")
-     */
+    // Solve the tasks and return answers to queries
     vector<string> solveDisjointSetsTasks(vector<pair<int, pair<int, int> > > tasks);
 
-    /**
-     * @brief Get the Diameter of this Tree 
-     * (presumes that this graph is a tree)
-     * 
-     * @param rootNode root of the tree (zero based!!!)
-     * @return int 
-     */
+    // Get the Diameter of this Tree (presumes that this graph is a tree)
     int getTreeDiameter(int rootNode);
 
-    /**
-     * @brief Get an Eulerian Cycle of this graph
-     * Throws error if there is no Eulerian Cycle
-     * 
-     * @param startNode node from which to start searching
-     * @return vector<int> 
-     */
+    // Get an Eulerian Cycle of this graph. Throws error if there is no Eulerian Cycle
     vector<int> getEulerianCycle(int startNode);
 };
 
 #pragma region GraphClassImplementation
+/**
+ * @brief Print the edges to a output stream
+ */
 void Graph::printEdges(ostream &out, bool isZeroBased)
 {
     for (int node = 0; node < numberOfNodes; node++)
@@ -268,6 +144,12 @@ void Graph::printEdges(ostream &out, bool isZeroBased)
     }
 }
 
+/**
+ * @brief Does a depth first search and marks the visited nodes
+ * 
+ * @param node node from which to start the search
+ * @param isVisited array that knows whether a node is visited
+ */
 void Graph::DFS(int node, bool isVisited[])
 {
     isVisited[node] = true;
@@ -281,6 +163,18 @@ void Graph::DFS(int node, bool isVisited[])
     }
 }
 
+/**
+ * @brief Get a list of biconnected components (lists of nodes) in `biconnectedComponents`
+ * 
+ * @param node current node
+ * @param currentDepth current depth
+ * @param parentNode parent node of current node
+ * @param biconnectedComponents the biconnected components will be stored here
+ * @param depth depth of nodes (distance from root)
+ * @param low minimum level a node can reach (without going back through parent nodes)
+ * @param isVisited if a node is visited or not
+ * @param visitedNodes order in which nodes are visited in the DFS
+ */
 void Graph::findBiconnectedComponents(int node, int currentDepth, int parentNode, vector<vector<int> > &biconnectedComponents,
                                       int depth[], int low[], bool isVisited[], stack<int> &visitedNodes)
 {
@@ -321,6 +215,19 @@ void Graph::findBiconnectedComponents(int node, int currentDepth, int parentNode
     }
 }
 
+/**
+ * @brief Get a list of strongly connected components (lists of nodes) in `stronglyConnectedComponents`
+ * 
+ * @param node current node
+ * @param index smallest unused index
+ * @param parentNode parent node of current node
+ * @param stronglyConnectedComponents the strongly connected components will be stored here
+ * @param depth depth of nodes (distance from root)
+ * @param low minimum level a node can reach (without going back through parent nodes)
+ * @param isVisited if a node is visited or not
+ * @param inStack if the node is in the visitedNodes stack
+ * @param visitedNodes order in which nodes are visited in the DFS
+ */
 void Graph::findStronglyConnectedComponents(int node, int &index, int parentNode, vector<vector<int> > &stronglyConnectedComponents,
                                             int depth[], int low[], bool isVisited[], bool inStack[], stack<int> &visitedNodes)
 {
@@ -359,6 +266,17 @@ void Graph::findStronglyConnectedComponents(int node, int &index, int parentNode
     }
 }
 
+/**
+ * @brief Get a list of critical edges (pair of nodes) in `criticalEdges`
+ * 
+ * @param node current node
+ * @param index smallest unused index
+ * @param parentNode parent node of current node
+ * @param criticalEdges the critical edges will be stored here
+ * @param depth depth of nodes (distance from root)
+ * @param low minimum level a node can reach (without going back through parent nodes)
+ * @param isVisited if a node is visited or not
+ */
 void Graph::findCriticalEdges(int node, int &index, int parentNode, vector<vector<int> > &criticalEdges,
                               int depth[], int low[], bool isVisited[])
 {
@@ -391,6 +309,13 @@ void Graph::findCriticalEdges(int node, int &index, int parentNode, vector<vecto
     }
 }
 
+/**
+ * @brief Get the nodes in topological order in `topologicalOrder`
+ * 
+ * @param node current node in DFS
+ * @param topologicalOrder the nodes in topological order will be stored here
+ * @param isVisited if a node is visited or not
+ */
 void Graph::findTopologicalOrder(int node, vector<int> &topologicalOrder, bool isVisited[])
 {
     isVisited[node] = true;
@@ -405,6 +330,11 @@ void Graph::findTopologicalOrder(int node, vector<int> &topologicalOrder, bool i
     topologicalOrder.push_back(node);
 }
 
+/**
+ * @brief Set the edges
+ * 
+ * @param connections 
+ */
 void Graph::setEdges(vector<vector<int> > connections)
 {
     for (int i = 0; i < connections.size(); i++)
@@ -421,11 +351,24 @@ void Graph::setEdges(vector<vector<int> > connections)
     }
 }
 
+/**
+ * @brief Add an edge
+ * 
+ * @param node 
+ * @param targetNode 
+ */
 void Graph::addEdge(int node, int targetNode)
 {
     edges[node].push_back(targetNode);
 }
 
+/**
+ * @brief Read the edges from a stream
+ * 
+ * @param in 
+ * @param numberOfEdges 
+ * @param isZeroBased 
+ */
 void Graph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
     for (int i = 0; i < numberOfEdges; i++)
@@ -449,6 +392,12 @@ void Graph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
     }
 }
 
+/**
+ * @brief Get the minimum distances from startNode to all nodes
+ * (BFS implementation)
+ * 
+ * @param startNode base node from which the distances are calculated
+ */
 vector<int> Graph::getMinimumDistances(int startNode)
 {
     queue<int> bfsNodesQueue;
@@ -488,6 +437,12 @@ vector<int> Graph::getMinimumDistances(int startNode)
     return distances;
 }
 
+/**
+ * @brief Get the number of conex components of the Graph
+ * (DFS for each unvisited node)
+ * 
+ * @return int number of conex components
+ */
 int Graph::getNumberOfConexComponents()
 {
     bool isVisited[numberOfNodes];
@@ -508,6 +463,12 @@ int Graph::getNumberOfConexComponents()
     return numberOfConexComponents;
 }
 
+/**
+ * @brief Get the biconnected components of the Graph
+ * 
+ * @param startNode node from which to start looking
+ * @return vector<vector<int> > vector of biconnected components (list of nodes)
+ */
 vector<vector<int> > Graph::getBiconnectedComponents(int startNode)
 {
     vector<vector<int> > biconnectedComponents;
@@ -526,6 +487,11 @@ vector<vector<int> > Graph::getBiconnectedComponents(int startNode)
     return biconnectedComponents;
 }
 
+/**
+ * @brief Get the strongly connected components of the Graph
+ * 
+ * @return vector<vector<int> > vector of strongly connected components (list of nodes)
+ */
 vector<vector<int> > Graph::getStronglyConnectedComponents()
 {
     vector<vector<int> > stronglyConnectedComponents;
@@ -553,6 +519,11 @@ vector<vector<int> > Graph::getStronglyConnectedComponents()
     return stronglyConnectedComponents;
 }
 
+/**
+ * @brief Get the critical edges of the Graph
+ * 
+ * @return vector<vector<int> > vector of critical edges (pair of nodes)
+ */
 vector<vector<int> > Graph::getCriticalEdges()
 {
     vector<vector<int> > criticalEdges;
@@ -577,6 +548,13 @@ vector<vector<int> > Graph::getCriticalEdges()
     return criticalEdges;
 }
 
+/**
+ * @brief Find if the node degrees can form a graph 
+ * (Havel–Hakimi algorithm)
+ * 
+ * @param nodeDegrees vector of node degrees
+ * @return whether the degrees can form a graph
+ */
 bool Graph::isGraph(vector<int> nodeDegrees)
 {
     while (!nodeDegrees.empty())
@@ -613,6 +591,12 @@ bool Graph::isGraph(vector<int> nodeDegrees)
     return true;
 }
 
+/**
+ * @brief Get the nodes of the Graph in topological order
+ * (DFS that adds nodes to vector when the recursive call is finished)
+ * 
+ * @return vector<int> nodes in topological order
+ */
 vector<int> Graph::getNodesInTopologicalOrder()
 {
     vector<int> topologicalOrder;
@@ -634,6 +618,13 @@ vector<int> Graph::getNodesInTopologicalOrder()
     return topologicalOrder;
 }
 
+/**
+ * @brief Get the Root of a node and update the root of all nodes we go through
+ * 
+ * @param node 
+ * @param root
+ * @return int Root Node
+ */
 int Graph::getRootUpdatePath(int node, int root[])
 {
     // Find root node
@@ -646,6 +637,14 @@ int Graph::getRootUpdatePath(int node, int root[])
     return root[node];
 }
 
+/**
+ * @brief Unite the sets by setting the root of one to the other root
+ * 
+ * @param node1Root 
+ * @param node2Root 
+ * @param root 
+ * @param height 
+ */
 void Graph::uniteSets(int node1Root, int node2Root, int root[], int height[])
 {
     if (node1Root != node2Root)
@@ -663,6 +662,15 @@ void Graph::uniteSets(int node1Root, int node2Root, int root[], int height[])
     }
 }
 
+/**
+ * @brief Solve the tasks and return answers to queries
+ * Tasks can be:
+ * - UNITE SETS (By linking the root of a node to the root of the other node)
+ * - QUERY SAME SET (If nodes are in the same set or not - adds the answer to answers vector)
+ * 
+ * @param tasks 
+ * @return vector<string> answers to queries ("DA" / "NU")
+ */
 vector<string> Graph::solveDisjointSetsTasks(vector<pair<int, pair<int, int> > > tasks)
 {
     int root[numberOfNodes], height[numberOfNodes];
@@ -702,6 +710,13 @@ vector<string> Graph::solveDisjointSetsTasks(vector<pair<int, pair<int, int> > >
     return answers;
 }
 
+/**
+ * @brief Get the Diameter of this Tree 
+ * (presumes that this graph is a tree)
+ * 
+ * @param rootNode root of the tree (zero based!!!)
+ * @return int 
+ */
 int Graph::getTreeDiameter(int rootNode)
 {
     // Find furthest node from root
@@ -731,6 +746,13 @@ int Graph::getTreeDiameter(int rootNode)
     return maximumDistance + 1;
 }
 
+/**
+ * @brief Get an Eulerian Cycle of this graph
+ * Throws error if there is no Eulerian Cycle
+ * 
+ * @param startNode node from which to start searching
+ * @return vector<int> 
+ */
 vector<int> Graph::getEulerianCycle(int startNode)
 {
     // Copy edges in a new variable that also stores the edge index
@@ -827,29 +849,13 @@ private:
     // Maps the edges to their weights
     map<pair<int, int>, int> weightMap;
 
-    /**
-     * @brief Get a vector of all edges sorted by weight
-     * 
-     * @return vector<pair<int, pair<int, int> > > sorted edges {cost, {node, targetNode}}
-     */
+    // Get a vector of all edges sorted by weight
     vector<pair<int, pair<int, int> > > getSortedEdges();
 
-    /**
-     * @brief Check if node is in the binary configuration
-     * 
-     * @param node 
-     * @param binaryConfiguration 
-     * @return true if node is in the binary configuration
-     */
+    // Check if node is in the binary configuration
     bool inConfiguration(int node, int binaryConfiguration);
 
-    /**
-     * @brief Add the node to the binary configuration
-     * 
-     * @param node 
-     * @param binaryConfiguration 
-     * @return the new configuration
-     */
+    // Add the node to the binary configuration
     int addNodeToConfiguration(int node, int binaryConfiguration);
 
 public:
@@ -862,89 +868,47 @@ public:
     WeightedGraph(int numberOfNodes, bool isOriented)
         : Graph(numberOfNodes, isOriented) {}
 
-    /**
-     * @brief Read edges from a input stream
-     * 
-     * @param in 
-     * @param numberOfEdges 
-     * @param isZeroBased 
-     */
+    // Read edges from an input stream
     void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
-    /**
-     * @brief Read the edges from a stream (matrix format)
-     * 
-     * @param in 
-     */
+    // Read the edges from a stream (matrix format)
     void readEdgesFromMatrix(istream &in);
 
-    /**
-     * @brief Get the Adjacency Matrix of the Graph
-     * 
-     * @return vector<vector<int> > 
-     */
+    // Get the Adjacency Matrix of the Graph
     vector<vector<int> > getAdjacencyMatrix();
 
-    /**
-     * @brief Prints a Matrix in a stream
-     * 
-     * @param out 
-     * @param matrix
-     */
+    // Prints a Matrix in a stream
     static void printMatrix(ostream &out, vector<vector<int> > matrix);
 
-    /**
-     * @brief Get the minimum distances from startNode to all nodes. 
-     * (Dijkstra Algorithm)
-     * WARNING: Does not work for negative weights!
-     * 
-     * @param startNode base node from which the distances are calculated
-     * @return the distances from the startNode to all other nodes
-     */
+    // Get the minimum distances from startNode to all nodes (Dijkstra Algorithm)
+    // WARNING: Does not work for negative weights!
     vector<int> getMinimumDistances(int startNode);
 
-    /**
-     * @brief Get the minimum distances from startNode to all nodes. 
-     * (Bellman Ford Algorithm)
-     * Throws error when there is a negative cycle
-     * 
-     * @param startNode base node from which the distances are calculated
-     * @return the distances from the startNode to all other nodes
-     */
+    // Get the minimum distances from startNode to all nodes. (Bellman Ford Algorithm)
+    // Throws error when there is a negative cycle
     vector<int> getMinimumDistancesNegativeWeights(int startNode);
 
     // Faster function
     vector<int> getMinimumDistancesNegativeWeights(int startNode, vector<vector<pair<int, int> > > weightedEdges);
 
-    /**
-     * @brief Get the Minimum Distances Matrix of the Graph
-     * (Roy Floyd Algorithm)
-     * 
-     * @return vector<vector<int> > 
-     */
+    // Get the Minimum Distances Matrix of the Graph (Roy Floyd Algorithm)
     vector<vector<int> > getMinimumDistancesMatrix();
 
-    /**
-     * @brief Get the Minimum Spanning Tree of the Graph.
-     * (Kruskal Algorithm: 
-     * Sort all edges
-     * Iterate through the edges. If the 2 nodes are not in the same component add the edge
-     * Stop when we have N-1 edges)
-     * 
-     * @param totalCost The cost will be stored here
-     * @return Graph 
-     */
+    // Get the Minimum Spanning Tree of the Graph. (Kruskal Algorithm)
     Graph getMinimumSpanningTree(int &totalCost);
 
-    /**
-     * @brief Get the Minimum Cost of Hamiltonian Cycle of the Graph
-     * 
-     * @return int minimum cost or NO_PATH if there is no Hamiltonian Cycle
-     */
+    // Get the Minimum Cost of Hamiltonian Cycle of the Graph
     int getMinimumCostHamiltonianCycle();
 };
 
 #pragma region WeightedGraphClassImplementation
+/**
+ * @brief Read edges from an input stream
+ * 
+ * @param in 
+ * @param numberOfEdges 
+ * @param isZeroBased 
+ */
 void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
     for (int i = 0; i < numberOfEdges; i++)
@@ -979,6 +943,11 @@ void WeightedGraph::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
     }
 }
 
+/**
+ * @brief Read the edges from a stream (matrix format)
+ * 
+ * @param in 
+ */
 void WeightedGraph::readEdgesFromMatrix(istream &in)
 {
     for (int i = 0; i < numberOfNodes; i++)
@@ -993,6 +962,11 @@ void WeightedGraph::readEdgesFromMatrix(istream &in)
     }
 }
 
+/**
+ * @brief Get the Adjacency Matrix of the Graph
+ * 
+ * @return vector<vector<int> > 
+ */
 vector<vector<int> > WeightedGraph::getAdjacencyMatrix()
 {
     vector<vector<int> > adjacencyMatrix(numberOfNodes);
@@ -1014,6 +988,12 @@ vector<vector<int> > WeightedGraph::getAdjacencyMatrix()
     return adjacencyMatrix;
 }
 
+/**
+ * @brief Get the Minimum Distances Matrix of the Graph
+ * (Roy Floyd Algorithm)
+ * 
+ * @return vector<vector<int> > 
+ */
 vector<vector<int> > WeightedGraph::getMinimumDistancesMatrix()
 {
     vector<vector<int> > minimumDistancesMatrix = getAdjacencyMatrix();
@@ -1046,6 +1026,12 @@ vector<vector<int> > WeightedGraph::getMinimumDistancesMatrix()
     return minimumDistancesMatrix;
 }
 
+/**
+ * @brief Prints a Matrix in a stream
+ * 
+ * @param out 
+ * @param matrix
+ */
 void WeightedGraph::printMatrix(ostream &out, vector<vector<int> > matrix)
 {
     for (int i = 0; i < matrix.size(); i++)
@@ -1062,6 +1048,11 @@ void WeightedGraph::printMatrix(ostream &out, vector<vector<int> > matrix)
     }
 }
 
+/**
+ * @brief Get a vector of all edges sorted by weight
+ * 
+ * @return vector<pair<int, pair<int, int> > > sorted edges {cost, {node, targetNode}}
+ */
 vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
 {
     vector<pair<int, pair<int, int> > > sortedEdges;
@@ -1082,6 +1073,16 @@ vector<pair<int, pair<int, int> > > WeightedGraph::getSortedEdges()
     return sortedEdges;
 }
 
+/**
+ * @brief Get the Minimum Spanning Tree of the Graph.
+ * (Kruskal Algorithm: 
+ * Sort all edges
+ * Iterate through the edges. If the 2 nodes are not in the same component add the edge
+ * Stop when we have N-1 edges)
+ * 
+ * @param totalCost The cost will be stored here
+ * @return Graph 
+ */
 Graph WeightedGraph::getMinimumSpanningTree(int &totalCost)
 {
     Graph minimumSpanningTree(numberOfNodes, true);
@@ -1171,6 +1172,14 @@ vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode, vec
     return minimumDistance;
 }
 
+/**
+ * @brief Get the minimum distances from startNode to all nodes. 
+ * (Bellman Ford Algorithm)
+ * Throws error when there is a negative cycle
+ * 
+    * @param startNode base node from which the distances are calculated
+ * @return the distances from the startNode to all other nodes
+ */
 vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode)
 {
     vector<int> minimumDistance(numberOfNodes);
@@ -1217,6 +1226,14 @@ vector<int> WeightedGraph::getMinimumDistancesNegativeWeights(int startNode)
     return minimumDistance;
 }
 
+/**
+ * @brief Get the minimum distances from startNode to all nodes. 
+ * (Dijkstra Algorithm)
+ * WARNING: Does not work for negative weights!
+ * 
+ * @param startNode base node from which the distances are calculated
+ * @return the distances from the startNode to all other nodes
+ */
 vector<int> WeightedGraph::getMinimumDistances(int startNode)
 {
     vector<int> minimumDistance(numberOfNodes);
@@ -1257,11 +1274,26 @@ vector<int> WeightedGraph::getMinimumDistances(int startNode)
     return minimumDistance;
 }
 
+/**
+ * @brief Check if node is in the binary configuration
+ * 
+ * @param node 
+ * @param binaryConfiguration 
+ * @return true if node is in the binary configuration
+ */
 bool WeightedGraph::inConfiguration(int node, int binaryConfiguration)
 {
     return ((1 << node) & binaryConfiguration) != 0;
 }
 
+
+/**
+ * @brief Add the node to the binary configuration
+ * 
+ * @param node 
+ * @param binaryConfiguration 
+ * @return the new configuration
+ */
 int WeightedGraph::addNodeToConfiguration(int node, int binaryConfiguration)
 {
     if (inConfiguration(node, binaryConfiguration))
@@ -1272,6 +1304,11 @@ int WeightedGraph::addNodeToConfiguration(int node, int binaryConfiguration)
     return binaryConfiguration + (1 << node);
 }
 
+/**
+ * @brief Get the Minimum Cost of Hamiltonian Cycle of the Graph
+ * 
+ * @return int minimum cost or NO_PATH if there is no Hamiltonian Cycle
+ */
 int WeightedGraph::getMinimumCostHamiltonianCycle()
 {
 
@@ -1337,18 +1374,10 @@ int WeightedGraph::getMinimumCostHamiltonianCycle()
 class FlowNetwork : public Graph
 {
 private:
-    // Maps the edges to their weights
+    // Capacity of edges
     vector<vector<int> > capacity;
 
-    /**
-     * @brief Whether or not destination can be reached using edges that are not at full capacity
-     * 
-     * @param source 
-     * @param destination 
-     * @param parentNode 
-     * @param flow current flow of every node
-     * @return true if there is a valid path
-     */
+    // Whether or not destination can be reached using edges that are not at full capacity
     bool acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow);
 
 public:
@@ -1366,27 +1395,21 @@ public:
         capacity.resize(numberOfNodes, zeroRow);
     }
 
-    /**
-     * @brief Read edges from a input stream
-     * 
-     * @param in 
-     * @param numberOfEdges 
-     * @param isZeroBased 
-     */
+    // Read edges from a input stream
     void readEdges(istream &in, int numberOfEdges, bool isZeroBased);
 
-    /**
-     * @brief Get the Max Flow of the Graph 
-     * (weights are used as capacities)
-     * 
-     * @param source 
-     * @param destination 
-     * @return int 
-     */
+    // Get the Max Flow of the Graph 
     int getMaxFlow(int source, int destination);
 };
 
 #pragma region FlowNetworkImplementation
+/**
+ * @brief Read edges from a input stream
+ * 
+ * @param in 
+ * @param numberOfEdges 
+ * @param isZeroBased 
+ */
 void FlowNetwork::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
 {
 
@@ -1414,6 +1437,15 @@ void FlowNetwork::readEdges(istream &in, int numberOfEdges, bool isZeroBased)
     }
 }
 
+/**
+ * @brief Whether or not destination can be reached using edges that are not at full capacity
+ * 
+ * @param source 
+ * @param destination 
+ * @param parentNode 
+ * @param flow current flow of every node
+ * @return true if there is a valid path
+ */
 bool FlowNetwork::acceptsMoreFlow(int source, int destination, bool isVisited[], int parentNode[], vector<vector<int> > flow)
 {
     queue<int> bfsNodesQueue;
@@ -1448,6 +1480,13 @@ bool FlowNetwork::acceptsMoreFlow(int source, int destination, bool isVisited[],
     return isVisited[destination];
 }
 
+/**
+ * @brief Get the Max Flow of the Graph
+ * 
+ * @param source 
+ * @param destination 
+ * @return int 
+ */
 int FlowNetwork::getMaxFlow(int source, int destination)
 {
 
@@ -1505,16 +1544,8 @@ private:
     // Number of nodes in the right side of the biparted graph
     int numberOfRightNodes;
 
-    /**
-     * @brief Check if leftNode can be right connected either to a rightNode 
-     * that is unvisited or leftConnection[rightNode] has an alternate right connection
-     * 
-     * @param leftNode 
-     * @param isVisited 
-     * @param rightConnection 
-     * @param leftConnection 
-     * @return true if leftNode can be connected
-     */
+    // Check if leftNode can be right connected either to a rightNode that is unvisited or
+    // leftConnection[rightNode] has an alternate right connection
     bool canBeRightConnected(int leftNode, vector<bool> &isVisited, vector<int> &rightConnection, vector<int> &leftConnection);
 
 public:
@@ -1529,14 +1560,21 @@ public:
         this->numberOfRightNodes = numberOfRightNodes;
     }
 
-    /**
-     * @brief Get the Maximum Bipartite Matching of the Graph
-     * 
-     * @return vector<pair<int, int> > vector of connections that make up the Maximum Bipartite Matching
-     */
+    // Get the Maximum Bipartite Matching of the Graph
     vector<pair<int, int> > getMaximumBipartiteMatching();
 };
 
+#pragma region BipartedGraphImplementation
+/**
+ * @brief Check if leftNode can be right connected either to a rightNode 
+ * that is unvisited or leftConnection[rightNode] has an alternate right connection
+ * 
+ * @param leftNode 
+ * @param isVisited 
+ * @param rightConnection 
+ * @param leftConnection 
+ * @return true if leftNode can be connected
+ */
 bool BipartedGraph::canBeRightConnected(int leftNode, vector<bool> &isVisitedRightNode, vector<int> &rightConnection, vector<int> &leftConnection)
 {
     for (int i = 0; i < edges[leftNode].size(); i++)
@@ -1548,8 +1586,7 @@ bool BipartedGraph::canBeRightConnected(int leftNode, vector<bool> &isVisitedRig
             isVisitedRightNode[rightNode] = true;
             // If right node doesn't have a left connection
             // OR If leftConnection of right node has alternate right connection (calls recursive function)
-            if (leftConnection[rightNode] == NO_NODE 
-            || (canBeRightConnected(leftConnection[rightNode], isVisitedRightNode, rightConnection, leftConnection)))
+            if (leftConnection[rightNode] == NO_NODE || (canBeRightConnected(leftConnection[rightNode], isVisitedRightNode, rightConnection, leftConnection)))
             {
                 // Connect and return
                 leftConnection[rightNode] = leftNode;
@@ -1561,6 +1598,11 @@ bool BipartedGraph::canBeRightConnected(int leftNode, vector<bool> &isVisitedRig
     return false;
 }
 
+/**
+ * @brief Get the Maximum Bipartite Matching of the Graph
+ * 
+ * @return vector<pair<int, int> > vector of connections that make up the Maximum Bipartite Matching
+ */
 vector<pair<int, int> > BipartedGraph::getMaximumBipartiteMatching()
 {
     vector<int> rightConnection(numberOfNodes, NO_NODE);
@@ -1571,7 +1613,7 @@ vector<pair<int, int> > BipartedGraph::getMaximumBipartiteMatching()
         // Reset isVisitedRightNode for this DFS
         vector<bool> isVisitedRightNode(numberOfRightNodes, false);
 
-        // Call DFS to see if left node can be connected 
+        // Call DFS to see if left node can be connected
         // while keeping already connected left nodes connected
         canBeRightConnected(leftNode, isVisitedRightNode, rightConnection, leftConnection);
     }
@@ -1586,34 +1628,15 @@ vector<pair<int, int> > BipartedGraph::getMaximumBipartiteMatching()
     }
     return matches;
 }
+#pragma endregion EndBipartedGraphImplementation
 
 int main()
 {
-	
     int numberOfNodes, numberOfEdges;
     fin >> numberOfNodes >> numberOfEdges;
- 
-    Graph graph(numberOfNodes, true);
+
+    Graph graph(numberOfNodes, false);
     graph.readEdges(fin, numberOfEdges, false);
- 
-    try
-    {
-        vector<int> eulerianCycle = graph.getEulerianCycle(0);
-        for (int i = 0; i < eulerianCycle.size(); i++)
-        {
-            fout << eulerianCycle[i] + 1 << " ";
-        }
-    }
-    catch (string e)
-    {
-        if (e == "Can't find an eulerian cycle in this graph!")
-        {
-            // No eulerial cycle
-            fout << -1;
-        }
-        else
-        {
-            fout << e;
-        }
-    }
+
+    fout << graph.getNumberOfConexComponents();
 }
